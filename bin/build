@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+#
+# Builds dist/photos-sh.zip: the plugin with its Composer dependencies
+# (no development packages), ready for Plugins → Add New → Upload.
+#
+#   bin/build
+#
+# The files are staged in a temporary directory, which is removed at the
+# end; set KEEP_STAGE=1 to keep it (its path is printed).
+
+set -euo pipefail
+
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+slug="photos-sh"
+
+for tool in composer php zip; do
+	command -v "$tool" >/dev/null || { echo "bin/build needs $tool." >&2; exit 1; }
+done
+
+stage="$(mktemp -d "${TMPDIR:-/tmp}/photos-sh-build.XXXXXX")"
+cleanup() {
+	if [ -n "${KEEP_STAGE:-}" ]; then
+		echo "Stage kept: $stage"
+	else
+		rm -rf "$stage"
+	fi
+}
+trap cleanup EXIT
+
+plugin="$stage/$slug"
+mkdir -p "$plugin"
+
+cp "$root/photos-sh.php" "$root/uninstall.php" "$root/readme.txt" "$root/LICENSE" "$root/composer.json" "$plugin/"
+cp -R "$root/src" "$root/assets" "$root/languages" "$plugin/"
+
+# A "path" repository (the library's checkout next to this one) is copied
+# into the stage without its own vendor/, tests and dot-files, as a release
+# archive of it would be, and composer.json is pointed at the copy.
+php -r '
+	$file = $argv[1];
+	$root = $argv[2];
+	$json = json_decode((string) file_get_contents($file), true, 512, JSON_THROW_ON_ERROR);
+	foreach ($json["repositories"] ?? [] as $i => $repository) {
+		if (($repository["type"] ?? "") !== "path") {
+			continue;
+		}
+		$url = $repository["url"];
+		$source = realpath(str_starts_with($url, "/") ? $url : $root . "/" . $url);
+		if ($source === false) {
+			fwrite(STDERR, "The path repository " . $url . " does not exist.\n");
+			exit(1);
+		}
+		$json["repositories"][$i]["url"] = "../repos/" . $i;
+		echo $i, "\t", $source, "\n";
+	}
+	file_put_contents($file, json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+' "$plugin/composer.json" "$root" | while IFS=$'\t' read -r index source; do
+	mkdir -p "$stage/repos/$index"
+	tar -C "$source" --exclude='./vendor' --exclude='./tests' --exclude='./.[!.]*' --exclude='./composer.lock' -cf - . \
+		| tar -C "$stage/repos/$index" -xf -
+done
+
+# Copy path repositories instead of linking them.
+COMPOSER_MIRROR_PATH_REPOS=1 composer install \
+	--working-dir="$plugin" \
+	--no-dev \
+	--no-interaction \
+	--no-progress \
+	--prefer-dist \
+	--classmap-authoritative \
+	--quiet
+
+# Composer's own files are not part of the plugin.
+rm -f "$plugin/composer.json" "$plugin/composer.lock"
+
+mkdir -p "$root/dist"
+rm -f "$root/dist/$slug.zip"
+(cd "$stage" && zip -r -q -X "$root/dist/$slug.zip" "$slug" -x '*/.git/*' '*/.DS_Store')
+
+echo "Built dist/$slug.zip ($(du -h "$root/dist/$slug.zip" | cut -f1))"

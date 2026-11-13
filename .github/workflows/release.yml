@@ -1,0 +1,110 @@
+name: Release
+
+# Builds the plugin zip from a tag `v<version>` and attaches it to a GitHub
+# release, so there is a file to upload under Plugins → Add New → Upload
+# Plugin. GitHub releases are where the plugin is distributed for now; it is
+# not in the wordpress.org plugin directory.
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+# One run per tag, and never cancelled: a release cancelled halfway may
+# already exist without its file.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: build the tag and publish it
+    runs-on: ubuntu-latest
+    # Creating a release and attaching the zip writes to this repository's
+    # contents, and that is the whole list.
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Full history: the tag is checked against main below.
+          fetch-depth: 0
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: curl, json
+          coverage: none
+
+      # The version is written in four places, and WordPress reads two of
+      # them (the plugin header and readme.txt's stable tag).
+      - name: the tag is the plugin's version, everywhere it is written
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          header="$(sed -n 's/^ \* Version: *//p' photos-sh.php)"
+          constant="$(sed -n "s/^define( 'PHOTOS_SH_VERSION', '\(.*\)' );$/\1/p" photos-sh.php)"
+          class="$(sed -n "s/^[[:space:]]*public const VERSION = '\(.*\)';$/\1/p" src/Plugin.php)"
+          stable="$(sed -n 's/^Stable tag: *//p' readme.txt)"
+          echo "tag $version, header $header, PHOTOS_SH_VERSION $constant, Plugin::VERSION $class, stable tag $stable"
+          for found in "$header" "$constant" "$class" "$stable"; do
+            if [ "$found" != "$version" ]; then
+              echo "The tag is $GITHUB_REF_NAME, but the plugin says '$found' somewhere above."
+              exit 1
+            fi
+          done
+
+      # A tag on a side branch would ship code main never saw.
+      - name: the tag is reachable from main
+        run: |
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "Tag $GITHUB_REF_NAME points at $GITHUB_SHA, which is not on main."
+            echo "Releases are built from main: merge first, then tag the merged commit."
+            exit 1
+          fi
+
+      - uses: ramsey/composer-install@v4
+      - name: Code style (WordPress Coding Standards)
+        run: vendor/bin/phpcs
+      - name: Static analysis
+        run: vendor/bin/phpstan analyse --no-progress --memory-limit=1G
+      - name: Unit tests
+        run: vendor/bin/phpunit
+
+      - name: Build the plugin zip
+        run: bin/build
+
+      # The zip is checked, not assumed: it has to hold this version and the
+      # library it runs on.
+      - name: the zip holds the plugin at this version
+        run: |
+          unzip -p dist/photos-sh.zip photos-sh/photos-sh.php | grep -q "^ \* Version: *${GITHUB_REF_NAME#v}\$"
+          unzip -l dist/photos-sh.zip | grep -q ' photos-sh/vendor/autoload.php$'
+          unzip -l dist/photos-sh.zip | grep -q ' photos-sh/vendor/photos-sh/photos/src/Photos.php$'
+
+      - name: release notes
+        run: |
+          {
+            printf 'Photos.sh for WordPress, %s.\n\n' "$GITHUB_REF_NAME"
+            printf 'Download `photos-sh.zip` below and upload it under Plugins → Add New → Upload Plugin.\n\n'
+            printf 'See [CHANGELOG.md](https://github.com/photos-sh/photos-wordpress/blob/%s/CHANGELOG.md) for what changed.\n' "$GITHUB_REF_NAME"
+          } > "$RUNNER_TEMP/notes.md"
+
+      # `gh` ships on the runner: no third-party action holds the token. A
+      # hyphen in the tag (v1.2.0-rc1) makes it a pre-release.
+      # --verify-tag: never create a tag that is not there.
+      - name: publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          args=()
+          case "$GITHUB_REF_NAME" in
+            *-*) args+=(--prerelease) ;;
+          esac
+          gh release create "$GITHUB_REF_NAME" \
+            --verify-tag \
+            --title "$GITHUB_REF_NAME" \
+            --notes-file "$RUNNER_TEMP/notes.md" \
+            "${args[@]}" \
+            dist/photos-sh.zip

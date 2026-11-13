@@ -1,0 +1,530 @@
+# Copyright (C) 2026 Photos.sh
+# This file is distributed under the GPL-2.0-or-later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Photos.sh 1.0.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/photos-wordpress\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-11-12T10:33:49+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: photos-sh\n"
+
+#. Plugin Name of the plugin
+#. Author of the plugin
+#: photos-sh.php:3
+#: photos-sh.php:9
+#: src/Admin/MediaActions.php:170
+#: src/Admin/MediaActions.php:359
+#: src/Admin/SettingsPage.php:71
+#: src/Admin/SettingsPage.php:72
+msgid "Photos.sh"
+msgstr ""
+
+#. Plugin URI of the plugin
+#. Author URI of the plugin
+#: photos-sh.php:4
+#: photos-sh.php:10
+msgid "https://photos.sh"
+msgstr ""
+
+#. Description of the plugin
+#: photos-sh.php:5
+msgid "Remove backgrounds, upscale, remove text and fix product photos for marketplaces, from the media library. Uses the Photos.sh API."
+msgstr ""
+
+#: photos-sh.php:31
+msgid "Photos.sh is missing its bundled library. Install the plugin from a release zip, or run \"composer install\" in the plugin folder."
+msgstr ""
+
+#: src/Admin/BatchNotice.php:132
+msgid "You are not allowed to do this."
+msgstr ""
+
+#: src/Admin/BatchNotice.php:182
+#: src/WooCommerce/ProductBulkAction.php:83
+msgid "Remove background from product images"
+msgstr ""
+
+#. translators: 1: the action's name, 2: images finished, 3: images in total.
+#: src/Admin/BatchNotice.php:188
+#, php-format
+msgid "Photos.sh, %1$s: %2$d of %3$d done, the rest is waiting."
+msgstr ""
+
+#. translators: 1: the action's name, 2: images in total.
+#: src/Admin/BatchNotice.php:191
+#, php-format
+msgid "Photos.sh, %1$s: finished, %2$d in total."
+msgstr ""
+
+#. translators: %d: a number of images.
+#: src/Admin/BatchNotice.php:195
+#, php-format
+msgid "%d failed."
+msgid_plural "%d failed."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: a number of images.
+#: src/Admin/BatchNotice.php:199
+#, php-format
+msgid "%d skipped."
+msgid_plural "%d skipped."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Admin/BatchNotice.php:217
+msgid "Dismiss"
+msgstr ""
+
+#: src/Admin/MediaActions.php:134
+msgid "Fix for a marketplace…"
+msgstr ""
+
+#: src/Admin/MediaActions.php:149
+msgid "Replace alt text…"
+msgstr ""
+
+#: src/Admin/MediaActions.php:189
+msgid "The result is saved as a new image. This one is not changed."
+msgstr ""
+
+#: src/Admin/MediaActions.php:210
+msgid "Fix for a marketplace"
+msgstr ""
+
+#: src/Admin/MediaActions.php:236
+msgid "Alternative text"
+msgstr ""
+
+#: src/Admin/MediaActions.php:239
+msgid "This image already has alternative text. Replacing it cannot be undone."
+msgstr ""
+
+#: src/Admin/MediaActions.php:256
+msgid "You are not allowed to edit this image."
+msgstr ""
+
+#: src/Admin/MediaActions.php:264
+msgid "Unknown Photos.sh action."
+msgstr ""
+
+#. translators: 1: the action's name, 2: why nothing was done, as a sentence.
+#: src/Admin/MediaActions.php:277
+#, php-format
+msgid "%1$s: %2$s"
+msgstr ""
+
+#. translators: 1: the action's name, 2: why it failed.
+#: src/Admin/MediaActions.php:285
+#, php-format
+msgid "%1$s failed. %2$s"
+msgstr ""
+
+#. translators: 1: the action's name, 2: the new image's title.
+#: src/Admin/MediaActions.php:309
+#, php-format
+msgid "%1$s: saved as a new image, \"%2$s\"."
+msgstr ""
+
+#: src/Admin/MediaActions.php:319
+msgid "Open it"
+msgstr ""
+
+#. translators: 1: the action's name, 2: the new alternative text, a sentence with its full stop.
+#: src/Admin/MediaActions.php:338
+#, php-format
+msgid "%1$s: the alternative text is now \"%2$s\""
+msgstr ""
+
+#: src/Admin/MediaActions.php:340
+msgid "Edit it"
+msgstr ""
+
+#: src/Admin/MediaActions.php:384
+#: src/ErrorMessages.php:33
+#: src/WooCommerce/ProductBulkAction.php:105
+msgid "Photos.sh has no API key yet. Add one under Settings → Photos.sh."
+msgstr ""
+
+#: src/Admin/MediaActions.php:398
+msgid "None of the selected items is an image you can edit."
+msgstr ""
+
+#. translators: %s: what was done, such as "Remove background".
+#: src/Admin/MediaActions.php:443
+#, php-format
+msgid "Made with \"%s\"."
+msgstr ""
+
+#: src/Admin/MediaActions.php:445
+msgid "Open the original"
+msgstr ""
+
+#: src/Admin/MediaActions.php:458
+msgid "It passes the marketplace's image rules."
+msgstr ""
+
+#. translators: %s: a list of rule codes, such as "min_longest, no_text".
+#: src/Admin/MediaActions.php:462
+#, php-format
+msgid "It still breaks these marketplace rules: %s"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:97
+msgid "API key"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:105
+msgid "Status"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:111
+msgid "Advanced"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:114
+msgid "Base URL"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:132
+msgid "Settings"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:169
+msgid "The key is set by the PHOTOS_API_KEY constant (in wp-config.php) and cannot be changed here."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:171
+msgid "The key is set by the PHOTOS_API_KEY environment variable and cannot be changed here."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:185
+msgid "A key is saved. Leave the field empty to keep it, or type a new one to replace it."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:187
+msgid "Create an API key on your organisation's API keys page in the Photos.sh console."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:195
+msgid "Remove the saved key"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:205
+msgid "Not connected: there is no API key yet."
+msgstr ""
+
+#. translators: %s: why the connection failed.
+#: src/Admin/SettingsPage.php:215
+#, php-format
+msgid "Not connected. %s"
+msgstr ""
+
+#. translators: %s: the account's name.
+#: src/Admin/SettingsPage.php:234
+#, php-format
+msgid "Connected to the account \"%s\": unlimited use."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:235
+msgid "Connected: unlimited use."
+msgstr ""
+
+#. translators: %s: a number of credits.
+#: src/Admin/SettingsPage.php:242
+#, php-format
+msgid "%s credit left"
+msgid_plural "%s credits left"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: 1: the account's name, 2: "12 credits left".
+#: src/Admin/SettingsPage.php:248
+#, php-format
+msgid "Connected to the account \"%1$s\": %2$s."
+msgstr ""
+
+#. translators: %s: "12 credits left".
+#: src/Admin/SettingsPage.php:250
+#, php-format
+msgid "Connected: %s."
+msgstr ""
+
+#. translators: %s: the account's name.
+#: src/Admin/SettingsPage.php:255
+#, php-format
+msgid "Connected to the account \"%s\"."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:256
+msgid "Connected."
+msgstr ""
+
+#. translators: %s: the default URL.
+#: src/Admin/SettingsPage.php:271
+#, php-format
+msgid "Where the Photos.sh API is. Leave empty for %s."
+msgstr ""
+
+#: src/AltText.php:41
+msgid "The text is written by AI, in English. Read it before publishing."
+msgstr ""
+
+#: src/AltText.php:75
+msgid "The image already has alternative text. It was kept."
+msgstr ""
+
+#: src/AltText.php:80
+msgid "Photos.sh did not return a description."
+msgstr ""
+
+#: src/ErrorMessages.php:36
+msgid "Photos.sh refused the API key. Check it under Settings → Photos.sh."
+msgstr ""
+
+#: src/ErrorMessages.php:39
+msgid "The Photos.sh account is out of credits. Add credits, then try again."
+msgstr ""
+
+#: src/ErrorMessages.php:42
+msgid "The Photos.sh account is suspended."
+msgstr ""
+
+#: src/ErrorMessages.php:45
+#: src/ErrorMessages.php:67
+msgid "Photos.sh is busy right now. Try again in a moment."
+msgstr ""
+
+#: src/ErrorMessages.php:48
+msgid "Photos.sh took too long to answer. Try again."
+msgstr ""
+
+#: src/ErrorMessages.php:51
+msgid "Could not reach Photos.sh. Check the connection of this site, then try again."
+msgstr ""
+
+#: src/ErrorMessages.php:56
+msgid "The image file is too large for Photos.sh."
+msgstr ""
+
+#: src/ErrorMessages.php:58
+msgid "Photos.sh cannot read this image format."
+msgstr ""
+
+#: src/ErrorMessages.php:60
+msgid "This tool is not available on the Photos.sh server."
+msgstr ""
+
+#. translators: %s: the reason the API gave, in English.
+#: src/ErrorMessages.php:64
+#, php-format
+msgid "Photos.sh could not process this image: %s"
+msgstr ""
+
+#. translators: %d: an HTTP status code.
+#: src/ErrorMessages.php:71
+#, php-format
+msgid "Photos.sh answered with an error (HTTP %d). Try again later."
+msgstr ""
+
+#: src/ErrorMessages.php:74
+msgid "Something went wrong while processing the image."
+msgstr ""
+
+#: src/Operation.php:302
+msgid "Remove background"
+msgstr ""
+
+#. translators: %d: the upscale factor, 2 or 4.
+#: src/Operation.php:305
+#, php-format
+msgid "Upscale %d×"
+msgstr ""
+
+#: src/Operation.php:307
+msgid "Remove text"
+msgstr ""
+
+#: src/Operation.php:309
+msgid "Fix light and colour"
+msgstr ""
+
+#: src/Operation.php:311
+msgid "Remove noise"
+msgstr ""
+
+#: src/Operation.php:313
+msgid "Colourise"
+msgstr ""
+
+#: src/Operation.php:315
+msgid "Restore faces"
+msgstr ""
+
+#: src/Operation.php:317
+msgid "Hide faces"
+msgstr ""
+
+#: src/Operation.php:319
+msgid "Replace alt text"
+msgstr ""
+
+#: src/Operation.php:319
+msgid "Write alt text"
+msgstr ""
+
+#. translators: %s: a marketplace's name, such as Amazon.
+#: src/Operation.php:322
+#, php-format
+msgid "Fix for %s"
+msgstr ""
+
+#: src/Operation.php:337
+msgid "Write alt text (replace existing text)"
+msgstr ""
+
+#: src/Operation.php:338
+msgid "Write alt text (keep existing text)"
+msgstr ""
+
+#: src/Operation.php:348
+msgid "background removed"
+msgstr ""
+
+#. translators: %d: the upscale factor, 2 or 4.
+#: src/Operation.php:351
+#, php-format
+msgid "upscaled %d×"
+msgstr ""
+
+#: src/Operation.php:353
+msgid "text removed"
+msgstr ""
+
+#: src/Operation.php:355
+msgid "light and colour fixed"
+msgstr ""
+
+#: src/Operation.php:357
+msgid "noise removed"
+msgstr ""
+
+#: src/Operation.php:359
+msgid "colourised"
+msgstr ""
+
+#: src/Operation.php:361
+msgid "faces restored"
+msgstr ""
+
+#: src/Operation.php:363
+msgid "faces hidden"
+msgstr ""
+
+#. translators: %s: a marketplace's name, such as Amazon.
+#: src/Operation.php:368
+#, php-format
+msgid "fixed for %s"
+msgstr ""
+
+#: src/Operation.php:379
+msgid "Remove noise is slow, and takes photos up to 12 megapixels."
+msgstr ""
+
+#: src/Operation.php:381
+msgid "Colourise guesses the colours, so some of them can be wrong."
+msgstr ""
+
+#: src/Operation.php:383
+msgid "Restore faces invents the detail it adds: do not use it for identity photos or evidence."
+msgstr ""
+
+#: src/Operation.php:385
+msgid "Hide faces blurs the faces it finds; a face it does not find still shows."
+msgstr ""
+
+#: src/Operation.php:495
+#: src/Operation.php:505
+msgid "No face was found."
+msgstr ""
+
+#. translators: %d: a number of faces.
+#: src/Operation.php:499
+#, php-format
+msgid "%d face was hidden."
+msgid_plural "%d faces were hidden."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Operation.php:508
+msgid "No face was restored."
+msgstr ""
+
+#. translators: %d: a number of faces.
+#: src/Operation.php:511
+#, php-format
+msgid "%d face was restored."
+msgid_plural "%d faces were restored."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: a number of faces.
+#: src/Operation.php:515
+#, php-format
+msgid "%d face is large enough already and was left as it is."
+msgid_plural "%d faces are large enough already and were left as they are."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/Processor.php:65
+msgid "Photos.sh did not return an image."
+msgstr ""
+
+#: src/Processor.php:72
+msgid "No new image was saved."
+msgstr ""
+
+#. translators: %s: the reason WordPress gave.
+#: src/Processor.php:79
+#: src/Processor.php:100
+#, php-format
+msgid "The new image could not be saved: %s"
+msgstr ""
+
+#: src/Queue/TaskRunner.php:63
+msgid "Unknown operation."
+msgstr ""
+
+#: src/Settings.php:112
+msgid "The base URL must start with http:// or https://. The previous one was kept."
+msgstr ""
+
+#: src/SourceImage.php:25
+msgid "This is not an image in the media library."
+msgstr ""
+
+#: src/SourceImage.php:30
+msgid "The image file is not on this server."
+msgstr ""
+
+#: src/WooCommerce/ProductBulkAction.php:119
+msgid "None of the selected items is a product you can edit."
+msgstr ""
+
+#: src/WooCommerce/ProductImages.php:53
+msgid "The product no longer exists."
+msgstr ""
+
+#: src/WooCommerce/ProductImages.php:58
+msgid "The product has no main image."
+msgstr ""
+
+#: src/WooCommerce/ProductImages.php:62
+msgid "The main image was already processed."
+msgstr ""

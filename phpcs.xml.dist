@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+<ruleset name="Photos.sh for WordPress">
+	<description>WordPress coding standards, with PSR-4 file names and short arrays.</description>
+
+	<file>photos-sh.php</file>
+	<file>uninstall.php</file>
+	<file>src</file>
+
+	<arg name="extensions" value="php"/>
+	<arg name="basepath" value="."/>
+	<arg value="sp"/>
+
+	<config name="minimum_wp_version" value="6.5"/>
+	<config name="testVersion" value="8.3-"/>
+
+	<rule ref="WordPress">
+		<!-- Classes are autoloaded by PSR-4: src/Admin/SettingsPage.php, not class-settingspage.php. -->
+		<exclude name="WordPress.Files.FileName"/>
+		<exclude name="Universal.Arrays.DisallowShortArraySyntax"/>
+		<!-- Constants are self-explanatory; no doc block on each. -->
+		<exclude name="Generic.Commenting.DocComment.MissingShort"/>
+		<exclude name="Squiz.Commenting.VariableComment.Missing"/>
+		<!-- Functions document what callers can catch, including what the library throws. -->
+		<exclude name="Squiz.Commenting.FunctionCommentThrowTag.WrongNumber"/>
+		<!-- PHPDoc types are more precise than the native ones (list<int> for array). -->
+		<exclude name="Squiz.Commenting.FunctionComment.IncorrectTypeHint"/>
+	</rule>
+	<rule ref="Generic.Arrays.DisallowLongArraySyntax"/>
+
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array">
+				<element value="photos-sh"/>
+			</property>
+		</properties>
+	</rule>
+	<rule ref="WordPress.WP.Capabilities">
+		<properties>
+			<property name="custom_capabilities" type="array">
+				<element value="edit_products"/>
+				<element value="edit_product"/>
+			</property>
+		</properties>
+	</rule>
+	<!-- The library's public properties are camelCase. -->
+	<rule ref="WordPress.NamingConventions.ValidVariableName">
+		<properties>
+			<property name="allowed_custom_properties" type="array">
+				<element value="errorCode"/>
+				<element value="retryAfter"/>
+				<element value="facesSkipped"/>
+			</property>
+		</properties>
+	</rule>
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<properties>
+			<property name="prefixes" type="array">
+				<element value="photos_sh"/>
+				<element value="PhotosSh"/>
+			</property>
+		</properties>
+	</rule>
+</ruleset>

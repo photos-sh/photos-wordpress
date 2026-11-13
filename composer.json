@@ -1,0 +1,49 @@
+{
+    "name": "photos-sh/photos-wordpress",
+    "description": "Photos.sh for WordPress: remove backgrounds, upscale, remove text and fix product photos for marketplaces, from the media library.",
+    "type": "wordpress-plugin",
+    "license": "GPL-2.0-or-later",
+    "homepage": "https://photos.sh",
+    "support": {
+        "issues": "https://github.com/photos-sh/photos-wordpress/issues",
+        "source": "https://github.com/photos-sh/photos-wordpress"
+    },
+    "require": {
+        "php": ">=8.3",
+        "ext-json": "*",
+        "photos-sh/photos": "^1.0"
+    },
+    "require-dev": {
+        "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+        "php-stubs/woocommerce-stubs": "^9.0 || ^10.0",
+        "php-stubs/wp-cli-stubs": "^2.10",
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^11.5 || ^12.0",
+        "szepeviktor/phpstan-wordpress": "^2.0",
+        "wp-coding-standards/wpcs": "^3.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "PhotosSh\\WordPress\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "PhotosSh\\WordPress\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "stan": "phpstan analyse --no-progress --memory-limit=1G",
+        "cs": "phpcs",
+        "cs:fix": "phpcbf",
+        "build": "bin/build",
+        "check": ["@cs", "@stan", "@test"]
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    }
+}
