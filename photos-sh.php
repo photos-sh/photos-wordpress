@@ -3,7 +3,7 @@
  * Plugin Name:       Photos.sh
  * Plugin URI:        https://photos.sh
  * Description:       Remove backgrounds, upscale, remove text and fix product photos for marketplaces, from the media library. Uses the Photos.sh API.
- * Version:           1.0.0
+ * Version:           1.1.0
  * Requires at least: 6.5
  * Requires PHP:      8.3
  * Author:            Photos.sh
@@ -18,7 +18,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'PHOTOS_SH_VERSION', '1.0.0' );
+define( 'PHOTOS_SH_VERSION', '1.1.0' );
 
 if ( ! is_readable( __DIR__ . '/vendor/autoload.php' ) ) {
 	add_action(

@@ -4,7 +4,7 @@ Tags: background removal, upscale, product photos, woocommerce, images
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.3
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -91,7 +91,7 @@ WordPress has bulk actions only in the list view of the media library. Switch to
 
 == Changelog ==
 
-= Unreleased =
+= 1.1.0 =
 * Settings → Photos.sh → "Studio shots": for product photos on a plain light backdrop, Remove background also keeps the box, case or lid shown with the product. WP-CLI: `--studio` and `--no-studio` override it for one run.
 
 = 1.0.0 =

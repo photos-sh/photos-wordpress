@@ -27,7 +27,7 @@ defined( 'ABSPATH' ) || exit;
  */
 final class Plugin {
 
-	public const VERSION = '1.0.0';
+	public const VERSION = '1.1.0';
 
 	/**
 	 * Starts the plugin. Called once, from the main plugin file.

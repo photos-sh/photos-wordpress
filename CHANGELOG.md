@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.1.0 (2026-11-16)
+
 - Settings → Photos.sh → Remove background → "Studio shots" (off by default):
   your product photos are taken on a plain light backdrop (a light tent), so
   background removal also keeps the box, case or lid shown with the product.
@@ -12,9 +14,10 @@
   overrides the setting for that run.
 - A result made on a studio shot has `['studio' => true]` in
   `_photos_sh_params`.
-- Needs photos-sh/photos 1.1 (`removeBackground(studio: …)`).
+- Needs photos-sh/photos 1.1 (`removeBackground(studio: …)`); the zip comes
+  with 1.2.1.
 
-## 1.0.0 (unreleased)
+## 1.0.0 (2026-11-13)
 
 First version.
 
