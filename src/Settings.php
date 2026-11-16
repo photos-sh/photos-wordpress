@@ -12,7 +12,7 @@ use PhotosSh\Photos;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Reads the API key and the base URL.
+ * Reads the API key, the base URL and the "Studio shots" setting.
  *
  * The key comes from the constant or environment variable `PHOTOS_API_KEY`
  * when one is set, and from the settings page otherwise.
@@ -79,13 +79,23 @@ final class Settings {
 	}
 
 	/**
+	 * Whether the product photos are studio shots (a product on a plain
+	 * light backdrop, as in a light tent): background removal then also
+	 * keeps the box, case or lid shown with the product. Off by default.
+	 */
+	public function studio(): bool {
+		return $this->stored()['studio'];
+	}
+
+	/**
 	 * Cleans the settings form's values before they are saved.
 	 *
 	 * An empty key field keeps the saved key (the form never shows it);
-	 * the "remove" checkbox clears it.
+	 * the "remove" checkbox clears it. An unticked "Studio shots" box is
+	 * not submitted at all, so a missing value means off.
 	 *
 	 * @param mixed $input The submitted values.
-	 * @return array{api_key: string, base_url: string}
+	 * @return array{api_key: string, base_url: string, studio: bool}
 	 */
 	public function sanitize( $input ): array {
 		$stored = $this->stored();
@@ -120,13 +130,14 @@ final class Settings {
 		return [
 			'api_key'  => $key,
 			'base_url' => $url,
+			'studio'   => ! empty( $input['studio'] ),
 		];
 	}
 
 	/**
 	 * The saved option, with every field present.
 	 *
-	 * @return array{api_key: string, base_url: string}
+	 * @return array{api_key: string, base_url: string, studio: bool}
 	 */
 	private function stored(): array {
 		$option = get_option( self::OPTION, [] );
@@ -135,6 +146,7 @@ final class Settings {
 		return [
 			'api_key'  => isset( $option['api_key'] ) && is_string( $option['api_key'] ) ? $option['api_key'] : '',
 			'base_url' => isset( $option['base_url'] ) && is_string( $option['base_url'] ) ? $option['base_url'] : '',
+			'studio'   => ! empty( $option['studio'] ),
 		];
 	}
 

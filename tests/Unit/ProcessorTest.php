@@ -123,6 +123,34 @@ final class ProcessorTest extends TestCase
         self::assertSame('image-bytes', file_get_contents($this->image), 'the original file is not overwritten');
     }
 
+    /**
+     * @return iterable<string, array{bool, Operation, string}>
+     */
+    public static function studio(): iterable
+    {
+        yield 'the setting off' => [false, Operation::remove_background(), 'http://engine.test/api/v1/remove-background'];
+        yield 'the setting on' => [true, Operation::remove_background(), 'http://engine.test/api/v1/remove-background?studio=true'];
+        yield 'on for this run' => [false, Operation::remove_background(true), 'http://engine.test/api/v1/remove-background?studio=true'];
+        yield 'off for this run' => [true, Operation::remove_background(false), 'http://engine.test/api/v1/remove-background'];
+    }
+
+    #[DataProvider('studio')]
+    public function testRemoveBackgroundFollowsTheStudioShotsSetting(bool $setting, Operation $operation, string $url): void
+    {
+        WpStubs::$options[Settings::OPTION]['studio'] = $setting;
+        $settings = new Settings();
+        $transport = new RecordingTransport(new Response(200, ['Content-Type' => 'image/png'], 'png'));
+
+        try {
+            (new Processor(new ClientFactory($settings, $transport), $settings))->process(12, $operation);
+            self::fail('The stubbed upload always fails.');
+        } catch (ProcessingException) {
+        }
+
+        self::assertCount(1, $transport->requests);
+        self::assertSame($url, $transport->requests[0]->url);
+    }
+
     public function testResultNoteReadsTheResultsMeta(): void
     {
         WpStubs::$meta[40][Processor::META_RESULT] = ['faces' => 3];

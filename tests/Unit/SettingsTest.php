@@ -79,7 +79,7 @@ final class SettingsTest extends TestCase
         WpStubs::$options[Settings::OPTION] = ['api_key' => 'saved-key', 'base_url' => ''];
 
         self::assertSame(
-            ['api_key' => 'saved-key', 'base_url' => ''],
+            ['api_key' => 'saved-key', 'base_url' => '', 'studio' => false],
             (new Settings())->sanitize(['api_key' => '  ', 'base_url' => '']),
         );
     }
@@ -97,10 +97,23 @@ final class SettingsTest extends TestCase
     public function testSanitizeIsStableWhenWordPressRunsItTwice(): void
     {
         $settings = new Settings();
-        $once = $settings->sanitize(['api_key' => 'new-key', 'base_url' => 'http://127.0.0.1:8098/api/']);
+        $once = $settings->sanitize(['api_key' => 'new-key', 'base_url' => 'http://127.0.0.1:8098/api/', 'studio' => '1']);
 
-        self::assertSame(['api_key' => 'new-key', 'base_url' => 'http://127.0.0.1:8098/api'], $once);
+        self::assertSame(['api_key' => 'new-key', 'base_url' => 'http://127.0.0.1:8098/api', 'studio' => true], $once);
         self::assertSame($once, $settings->sanitize($once));
+    }
+
+    public function testStudioShotsAreOffUntilTicked(): void
+    {
+        self::assertFalse((new Settings())->studio());
+
+        WpStubs::$options[Settings::OPTION] = ['api_key' => 'saved-key', 'base_url' => '', 'studio' => true];
+        $settings = new Settings();
+        self::assertTrue($settings->studio());
+
+        self::assertTrue($settings->sanitize(['studio' => '1'])['studio']);
+        self::assertFalse($settings->sanitize(['api_key' => ''])['studio'], 'an unticked box is not submitted');
+        self::assertFalse($settings->sanitize('nonsense')['studio']);
     }
 
     public function testSanitizeTheBaseUrl(): void

@@ -15,7 +15,8 @@ use PhotosSh\WordPress\Settings;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The settings page: the API key, the connected account, the base URL.
+ * The settings page: the API key, the connected account, background
+ * removal's "Studio shots", the base URL.
  */
 final class SettingsPage {
 
@@ -108,6 +109,16 @@ final class SettingsPage {
 			[ $this, 'render_status' ],
 			self::SLUG,
 			'photos_sh_account'
+		);
+
+		add_settings_section( 'photos_sh_remove_background', __( 'Remove background', 'photos-sh' ), '__return_empty_string', self::SLUG );
+		add_settings_field(
+			'photos_sh_studio',
+			__( 'Studio shots', 'photos-sh' ),
+			[ $this, 'render_studio_field' ],
+			self::SLUG,
+			'photos_sh_remove_background',
+			[ 'label_for' => 'photos-sh-studio' ]
 		);
 
 		add_settings_section( 'photos_sh_advanced', __( 'Advanced', 'photos-sh' ), '__return_empty_string', self::SLUG );
@@ -256,6 +267,21 @@ final class SettingsPage {
 			/* translators: %s: the account's name. */
 			? sprintf( __( 'Connected to the account "%s".', 'photos-sh' ), $name )
 			: __( 'Connected.', 'photos-sh' );
+	}
+
+	/**
+	 * Prints the "Studio shots" checkbox.
+	 */
+	public function render_studio_field(): void {
+		printf(
+			'<label><input type="checkbox" id="photos-sh-studio" name="%s[studio]" value="1" %s /> %s</label>',
+			esc_attr( Settings::OPTION ),
+			checked( $this->settings->studio(), true, false ),
+			esc_html__( 'Treat product photos as studio shots', 'photos-sh' )
+		);
+		echo '<p class="description">';
+		esc_html_e( 'Your product photos are taken on a plain light backdrop (a light tent): background removal also keeps the box, case or lid shown with the product.', 'photos-sh' );
+		echo '</p>';
 	}
 
 	/**

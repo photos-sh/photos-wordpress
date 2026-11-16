@@ -67,12 +67,16 @@ final class Command {
 	 * <attachment-id>...
 	 * : One or more image attachment IDs.
 	 *
+	 * [--studio]
+	 * : The photos are studio shots (a product on a plain light backdrop, as in a light tent): also keep the box, case or lid shown with the product. Overrides the "Studio shots" setting for this run; --no-studio turns it off for this run.
+	 *
 	 * [--porcelain]
 	 * : Print only the new attachment IDs.
 	 *
 	 * ## EXAMPLES
 	 *
 	 *     wp photos-sh remove-background 12 13
+	 *     wp photos-sh remove-background 14 --studio
 	 *
 	 * @subcommand remove-background
 	 *
@@ -80,7 +84,9 @@ final class Command {
 	 * @param array<string, mixed> $assoc_args The flags.
 	 */
 	public function remove_background( array $args, array $assoc_args ): void {
-		$this->run( Operation::remove_background(), $args, $assoc_args );
+		$studio = isset( $assoc_args['studio'] ) ? filter_var( $assoc_args['studio'], FILTER_VALIDATE_BOOLEAN ) : null;
+
+		$this->run( Operation::remove_background( $studio ), $args, $assoc_args );
 	}
 
 	/**

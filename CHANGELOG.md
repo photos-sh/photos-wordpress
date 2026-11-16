@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+- Settings → Photos.sh → Remove background → "Studio shots" (off by default):
+  your product photos are taken on a plain light backdrop (a light tent), so
+  background removal also keeps the box, case or lid shown with the product.
+  When it is on, Remove background sends `studio=true` (the row action, the
+  edit screen, the bulk actions, the WooCommerce bulk action and WP-CLI). The
+  setting is saved in `photos_sh_settings` as `studio`.
+- WP-CLI: `wp photos-sh remove-background --studio` (or `--no-studio`)
+  overrides the setting for that run.
+- A result made on a studio shot has `['studio' => true]` in
+  `_photos_sh_params`.
+- Needs photos-sh/photos 1.1 (`removeBackground(studio: …)`).
+
 ## 1.0.0 (unreleased)
 
 First version.

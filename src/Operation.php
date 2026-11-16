@@ -84,25 +84,40 @@ final class Operation {
 	public bool $replace;
 
 	/**
+	 * For remove background: whether the photo is a studio shot, so that
+	 * the box, case or lid shown with the product is kept too. Null leaves
+	 * it to the "Studio shots" setting.
+	 *
+	 * @var bool|null
+	 */
+	public ?bool $studio;
+
+	/**
 	 * Use the named constructors.
 	 *
 	 * @param string      $name        One of the operation constants.
 	 * @param int|null    $scale       The upscale factor.
 	 * @param string|null $marketplace The marketplace's name.
 	 * @param bool        $replace     For alt text: whether text that is already there is replaced.
+	 * @param bool|null   $studio      For remove background: whether the photo is a studio shot.
 	 */
-	private function __construct( string $name, ?int $scale = null, ?string $marketplace = null, bool $replace = false ) {
+	private function __construct( string $name, ?int $scale = null, ?string $marketplace = null, bool $replace = false, ?bool $studio = null ) {
 		$this->name        = $name;
 		$this->scale       = $scale;
 		$this->marketplace = $marketplace;
 		$this->replace     = $replace;
+		$this->studio      = $studio;
 	}
 
 	/**
 	 * Remove the background.
+	 *
+	 * @param bool|null $studio Whether the photo is a studio shot (a product on a plain light
+	 *                          backdrop), so that the box, case or lid shown with the product is
+	 *                          kept too. Null leaves it to the "Studio shots" setting.
 	 */
-	public static function remove_background(): self {
-		return new self( self::REMOVE_BACKGROUND );
+	public static function remove_background( ?bool $studio = null ): self {
+		return new self( self::REMOVE_BACKGROUND, null, null, false, $studio );
 	}
 
 	/**
@@ -255,6 +270,9 @@ final class Operation {
 	 * @return array<string, int|string|bool>
 	 */
 	public function params(): array {
+		if ( true === $this->studio ) {
+			return [ 'studio' => true ];
+		}
 		if ( null !== $this->scale ) {
 			return [ 'scale' => $this->scale ];
 		}
@@ -398,7 +416,8 @@ final class Operation {
 	}
 
 	/**
-	 * Runs the operation on an image file through the API.
+	 * Runs the operation on an image file through the API. Remove
+	 * background sends `studio` only when the operation's is true.
 	 *
 	 * @param Photos $photos The API client.
 	 * @param string $path   The image file.
@@ -408,7 +427,9 @@ final class Operation {
 	public function run( Photos $photos, string $path ): ImageResult {
 		switch ( $this->name ) {
 			case self::REMOVE_BACKGROUND:
-				return $photos->removeBackground( $path );
+				return true === $this->studio
+					? $photos->removeBackground( $path, studio: true )
+					: $photos->removeBackground( $path );
 			case self::UPSCALE:
 				return $photos->upscale( $path, $this->scale );
 			case self::REMOVE_TEXT:

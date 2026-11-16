@@ -14,7 +14,7 @@ Remove backgrounds, upscale, remove text and fix product photos for marketplaces
 
 Photos.sh brings the image tools of the [Photos.sh](https://photos.sh) API to the media library:
 
-* **Remove background**: a cutout of the product on a transparent background.
+* **Remove background**: a cutout of the product on a transparent background. With "Studio shots" on, the box, case or lid shown with the product is kept too.
 * **Upscale 2× / 4×**: a larger, sharper copy made with AI.
 * **Remove text**: watermarks, captions and other text off the photo.
 * **Fix light and colour**: automatic levels and white balance.
@@ -40,7 +40,7 @@ You need a Photos.sh account and an API key. Processing an image uses credits of
 
 This plugin sends images to the Photos.sh API (https://api.photos.sh by default) to process them. It is the only service the plugin talks to.
 
-* When you run one of the tools on an image, the image file and the chosen options (the tool, the upscale factor, the marketplace) are sent, with your API key. The processed image comes back and is saved in your media library. For "Write alt text", a description of the image comes back and is saved as its alternative text.
+* When you run one of the tools on an image, the image file and the chosen options (the tool, the upscale factor, the marketplace, whether the photo is a studio shot) are sent, with your API key. The processed image comes back and is saved in your media library. For "Write alt text", a description of the image comes back and is saved as its alternative text.
 * When you open Settings → Photos.sh (or run `wp photos-sh account`), your API key is sent to read the account's name and the credits left.
 
 Nothing is sent until you add an API key and run a tool. The service is provided by Photos.sh: [terms of service](https://photos.sh/legal/terms), [privacy policy](https://photos.sh/legal/privacy).
@@ -69,6 +69,10 @@ Not unless you ask. On an image that has alternative text, the row action and th
 
 The text is written by AI, in English, and can be wrong. Read it before publishing.
 
+= Can Remove background keep the box shown with my product? =
+
+Yes, when your product photos are taken on a plain light backdrop (a light tent). Turn on "Studio shots" under Settings → Photos.sh: background removal then also keeps what clearly stands out from the backdrop and touches the product, such as the gift box, case or lid shown with a bottle. Shadows and the floor are left out. A photo without a plain light backdrop is cut out as without the setting. On the command line, `--studio` or `--no-studio` overrides the setting for one run.
+
 = Why did "Hide faces" or "Restore faces" save no new image? =
 
 No face was found in the image (or, for "Restore faces", every face is large enough already), so there was nothing to change. The notice says so. When faces were found, the notice and the new image's edit screen say how many. A face that was not found is not hidden: check the result before you publish it.
@@ -86,6 +90,9 @@ The progress notice says why: the account is out of credits, the API key was ref
 WordPress has bulk actions only in the list view of the media library. Switch to the list view with the icon above the grid.
 
 == Changelog ==
+
+= Unreleased =
+* Settings → Photos.sh → "Studio shots": for product photos on a plain light backdrop, Remove background also keeps the box, case or lid shown with the product. WP-CLI: `--studio` and `--no-studio` override it for one run.
 
 = 1.0.0 =
 * First version: settings page, media library actions and bulk actions, WooCommerce product bulk action, WP-CLI commands.

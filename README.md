@@ -27,11 +27,21 @@ plugin directory, so WordPress does not offer its updates by itself.
 ## What it does
 
 **Settings → Photos.sh.** The API key, a line with the connected account and
-the credits left, and the base URL under "Advanced" (default
-`https://api.photos.sh`). The key can instead come from the constant or
-environment variable `PHOTOS_API_KEY`; that wins over the saved key and makes
-the field read-only. The saved key is never printed back: the field shows its
-last four characters as a placeholder.
+the credits left, "Studio shots" under "Remove background", and the base URL
+under "Advanced" (default `https://api.photos.sh`). The key can instead come
+from the constant or environment variable `PHOTOS_API_KEY`; that wins over the
+saved key and makes the field read-only. The saved key is never printed back:
+the field shows its last four characters as a placeholder.
+
+"Studio shots" (off by default) is for product photos taken on a plain light
+backdrop (a light tent): background removal then also keeps what clearly
+stands out from the backdrop and touches the product, such as the box, case or
+lid shown with a bottle. Shadows and the floor below the product are left out.
+A photo without a plain light backdrop is cut out as without the setting. It
+applies to every Remove background: the row action, the box on the edit
+screen, the bulk actions (read when each task runs), the WooCommerce bulk
+action and WP-CLI, where `--studio` and `--no-studio` override it for one run.
+The API is sent `studio=true` only when it is on.
 
 **Media library, one image.** Remove background, Upscale 2× / 4×, Remove text,
 Fix light and colour, Remove noise, Colourise, Restore faces, Hide faces,
@@ -96,6 +106,7 @@ image already is a cutout made by this plugin is skipped.
 
 ```bash
 wp photos-sh remove-background 12 13
+wp photos-sh remove-background 12 --studio # keep the box; --no-studio: don't
 wp photos-sh upscale 12 --scale=4          # 2 (default) or 4
 wp photos-sh remove-text 12
 wp photos-sh enhance 12                    # Fix light and colour
@@ -130,7 +141,7 @@ caption and parent post are copied. Post meta:
 | --- | --- |
 | `_photos_sh_source` | The source attachment's ID. |
 | `_photos_sh_operation` | `remove-background`, `upscale`, `remove-text`, `enhance`, `denoise`, `colorize`, `restore-faces`, `blur-faces` or `fix`. |
-| `_photos_sh_params` | `['scale' => 2]`, `['marketplace' => 'amazon']`, or `[]`. |
+| `_photos_sh_params` | `['scale' => 2]`, `['marketplace' => 'amazon']`, `['studio' => true]` (remove background on a studio shot), or `[]`. |
 | `_photos_sh_result` | For a fix: `['passed' => bool, 'findings' => [...]]`. For remove text: `['removed' => int, 'kept' => int]`. For hide faces: `['faces' => int]`. For restore faces: `['faces' => int, 'skipped' => int]` (`skipped`: faces left alone because they are large enough already). |
 
 "Write alt text" adds no meta of its own: it only sets

@@ -36,6 +36,8 @@ final class OperationTest extends TestCase
     public static function calls(): iterable
     {
         yield 'remove background' => [Operation::remove_background(), '/api/v1/remove-background'];
+        yield 'remove background, a studio shot' => [Operation::remove_background(true), '/api/v1/remove-background?studio=true'];
+        yield 'remove background, not a studio shot' => [Operation::remove_background(false), '/api/v1/remove-background'];
         yield 'upscale 2x' => [Operation::upscale(2), '/api/v1/upscale?scale=2'];
         yield 'upscale 4x' => [Operation::upscale(4), '/api/v1/upscale?scale=4'];
         yield 'remove text' => [Operation::remove_text(), '/api/v1/remove-text'];
@@ -153,6 +155,9 @@ final class OperationTest extends TestCase
     public function testParamsSuffixesAndLabels(): void
     {
         self::assertSame([], Operation::remove_background()->params());
+        self::assertSame([], Operation::remove_background(false)->params());
+        self::assertSame(['studio' => true], Operation::remove_background(true)->params());
+        self::assertSame('remove-background', Operation::remove_background(true)->key(), 'studio is not part of the key');
         self::assertSame(['scale' => 4], Operation::upscale(4)->params());
         self::assertSame(['marketplace' => 'ebay'], Operation::fix('ebay')->params());
 
