@@ -50,8 +50,9 @@ final class Processor {
 	 *
 	 * @param int       $attachment_id The source attachment.
 	 * @param Operation $operation     What to do; one that makes an image. A remove background
-	 *                                 that does not say whether the photo is a studio shot
-	 *                                 follows the "Studio shots" setting.
+	 *                                 that does not say whether the photo is a studio shot, or
+	 *                                 which model to use, follows the "Studio shots" and
+	 *                                 "Model" settings.
 	 * @param int       $max_retries   Extra attempts the library makes itself, waiting in between.
 	 * @param int       $author        The new attachment's author; the current user by default.
 	 * @return int The new attachment's ID.
@@ -63,8 +64,11 @@ final class Processor {
 	public function process( int $attachment_id, Operation $operation, int $max_retries = 0, int $author = 0 ): int {
 		[ $source, $path ] = SourceImage::read( $attachment_id );
 
-		if ( Operation::REMOVE_BACKGROUND === $operation->name && null === $operation->studio ) {
-			$operation = Operation::remove_background( $this->settings->studio() );
+		if ( Operation::REMOVE_BACKGROUND === $operation->name ) {
+			$operation = Operation::remove_background(
+				$operation->studio ?? $this->settings->studio(),
+				$operation->model ?? $this->settings->model()
+			);
 		}
 
 		$result    = $operation->run( $this->clients->create( $max_retries ), $path );

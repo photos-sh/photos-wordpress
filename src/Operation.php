@@ -56,6 +56,22 @@ final class Operation {
 	];
 
 	/**
+	 * The models remove background can find the subject with, by name.
+	 * Each costs the same.
+	 */
+	public const MODELS = [
+		'atlas' => 'Atlas',
+		'lumen' => 'Lumen',
+		'muse'  => 'Muse',
+	];
+
+	/**
+	 * The API's default model. It is not sent: the API uses it when no
+	 * model is given.
+	 */
+	public const DEFAULT_MODEL = 'atlas';
+
+	/**
 	 * One of the operation constants.
 	 *
 	 * @var string
@@ -93,6 +109,14 @@ final class Operation {
 	public ?bool $studio;
 
 	/**
+	 * For remove background: the model that finds the subject, a key of
+	 * MODELS. Null leaves it to the "Model" setting.
+	 *
+	 * @var string|null
+	 */
+	public ?string $model;
+
+	/**
 	 * Use the named constructors.
 	 *
 	 * @param string      $name        One of the operation constants.
@@ -100,24 +124,63 @@ final class Operation {
 	 * @param string|null $marketplace The marketplace's name.
 	 * @param bool        $replace     For alt text: whether text that is already there is replaced.
 	 * @param bool|null   $studio      For remove background: whether the photo is a studio shot.
+	 * @param string|null $model       For remove background: the model, a key of MODELS.
 	 */
-	private function __construct( string $name, ?int $scale = null, ?string $marketplace = null, bool $replace = false, ?bool $studio = null ) {
+	private function __construct( string $name, ?int $scale = null, ?string $marketplace = null, bool $replace = false, ?bool $studio = null, ?string $model = null ) {
 		$this->name        = $name;
 		$this->scale       = $scale;
 		$this->marketplace = $marketplace;
 		$this->replace     = $replace;
 		$this->studio      = $studio;
+		$this->model       = $model;
 	}
 
 	/**
 	 * Remove the background.
 	 *
-	 * @param bool|null $studio Whether the photo is a studio shot (a product on a plain light
-	 *                          backdrop), so that the box, case or lid shown with the product is
-	 *                          kept too. Null leaves it to the "Studio shots" setting.
+	 * @param bool|null   $studio Whether the photo is a studio shot (a product on a plain light
+	 *                            backdrop), so that the box, case or lid shown with the product is
+	 *                            kept too. Null leaves it to the "Studio shots" setting.
+	 * @param string|null $model  The model that finds the subject, a key of MODELS. Null leaves
+	 *                            it to the "Model" setting.
+	 * @throws \InvalidArgumentException For an unknown model.
 	 */
-	public static function remove_background( ?bool $studio = null ): self {
-		return new self( self::REMOVE_BACKGROUND, null, null, false, $studio );
+	public static function remove_background( ?bool $studio = null, ?string $model = null ): self {
+		if ( null !== $model ) {
+			$model = strtolower( trim( $model ) );
+			if ( ! isset( self::MODELS[ $model ] ) ) {
+				throw new \InvalidArgumentException( 'Unknown model.' );
+			}
+		}
+
+		return new self( self::REMOVE_BACKGROUND, null, null, false, $studio, $model );
+	}
+
+	/**
+	 * What a remove background model is recommended for, in a sentence or
+	 * two for the settings page. Empty for an unknown model.
+	 *
+	 * @param string $model A key of MODELS.
+	 */
+	public static function model_description( string $model ): string {
+		switch ( $model ) {
+			case 'atlas':
+				return __( 'Everyday product photos: a product alone or with its box, on any backdrop.', 'photos-sh' );
+			case 'lumen':
+				return __( 'Pale packaging on a light backdrop, such as a cream or wooden box beside a bottle, and close-ups where the product fills the photo. On those, Atlas can keep the bottle and drop the box. It may keep a dark backdrop at the photo\'s edge, and can cut away part of an open frame or wire stand.', 'photos-sh' );
+			case 'muse':
+				return __( 'People: portraits, and models wearing the product.', 'photos-sh' );
+			default:
+				return '';
+		}
+	}
+
+	/**
+	 * The model to send to the API for remove background, or null to send
+	 * none: when no model is set, or it is Atlas, the API's default.
+	 */
+	public function api_model(): ?string {
+		return null !== $this->model && self::DEFAULT_MODEL !== $this->model ? $this->model : null;
 	}
 
 	/**
@@ -270,8 +333,17 @@ final class Operation {
 	 * @return array<string, int|string|bool>
 	 */
 	public function params(): array {
-		if ( true === $this->studio ) {
-			return [ 'studio' => true ];
+		if ( self::REMOVE_BACKGROUND === $this->name ) {
+			$params = [];
+			if ( true === $this->studio ) {
+				$params['studio'] = true;
+			}
+			$model = $this->api_model();
+			if ( null !== $model ) {
+				$params['model'] = $model;
+			}
+
+			return $params;
 		}
 		if ( null !== $this->scale ) {
 			return [ 'scale' => $this->scale ];
@@ -417,7 +489,8 @@ final class Operation {
 
 	/**
 	 * Runs the operation on an image file through the API. Remove
-	 * background sends `studio` only when the operation's is true.
+	 * background sends `studio` only when the operation's is true, and
+	 * `model` only for a model other than Atlas, the API's default.
 	 *
 	 * @param Photos $photos The API client.
 	 * @param string $path   The image file.
@@ -427,9 +500,11 @@ final class Operation {
 	public function run( Photos $photos, string $path ): ImageResult {
 		switch ( $this->name ) {
 			case self::REMOVE_BACKGROUND:
-				return true === $this->studio
-					? $photos->removeBackground( $path, studio: true )
-					: $photos->removeBackground( $path );
+				return $photos->removeBackground(
+					$path,
+					studio: true === $this->studio ? true : null,
+					model: $this->api_model(),
+				);
 			case self::UPSCALE:
 				return $photos->upscale( $path, $this->scale );
 			case self::REMOVE_TEXT:

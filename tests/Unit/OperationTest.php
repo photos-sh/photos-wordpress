@@ -38,6 +38,9 @@ final class OperationTest extends TestCase
         yield 'remove background' => [Operation::remove_background(), '/api/v1/remove-background'];
         yield 'remove background, a studio shot' => [Operation::remove_background(true), '/api/v1/remove-background?studio=true'];
         yield 'remove background, not a studio shot' => [Operation::remove_background(false), '/api/v1/remove-background'];
+        yield 'remove background with atlas, the default' => [Operation::remove_background(null, 'atlas'), '/api/v1/remove-background'];
+        yield 'remove background with lumen' => [Operation::remove_background(null, 'lumen'), '/api/v1/remove-background?model=lumen'];
+        yield 'remove background with muse' => [Operation::remove_background(false, 'Muse'), '/api/v1/remove-background?model=muse'];
         yield 'upscale 2x' => [Operation::upscale(2), '/api/v1/upscale?scale=2'];
         yield 'upscale 4x' => [Operation::upscale(4), '/api/v1/upscale?scale=4'];
         yield 'remove text' => [Operation::remove_text(), '/api/v1/remove-text'];
@@ -140,6 +143,34 @@ final class OperationTest extends TestCase
         yield ['caption'];
     }
 
+    public function testRemoveBackgroundSendsStudioAndModelTogether(): void
+    {
+        $transport = new RecordingTransport(new Response(200, ['Content-Type' => 'image/png'], 'png'));
+        $photos = new Photos('key', 'http://engine.test/api', transport: $transport);
+
+        Operation::remove_background(true, 'lumen')->run($photos, $this->image);
+
+        self::assertCount(1, $transport->requests);
+        parse_str((string) parse_url($transport->requests[0]->url, PHP_URL_QUERY), $query);
+        self::assertEquals(['studio' => 'true', 'model' => 'lumen'], $query);
+    }
+
+    public function testRefusesUnknownModels(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        Operation::remove_background(null, 'orion');
+    }
+
+    public function testModelsAreDescribed(): void
+    {
+        self::assertSame(['atlas', 'lumen', 'muse'], array_keys(Operation::MODELS));
+        self::assertSame(Operation::DEFAULT_MODEL, array_key_first(Operation::MODELS));
+        self::assertStringStartsWith('Everyday product photos', Operation::model_description('atlas'));
+        self::assertStringStartsWith('Pale packaging on a light backdrop', Operation::model_description('lumen'));
+        self::assertStringStartsWith('People', Operation::model_description('muse'));
+        self::assertSame('', Operation::model_description('orion'));
+    }
+
     public function testRefusesOtherScalesAndMarketplaces(): void
     {
         try {
@@ -158,6 +189,10 @@ final class OperationTest extends TestCase
         self::assertSame([], Operation::remove_background(false)->params());
         self::assertSame(['studio' => true], Operation::remove_background(true)->params());
         self::assertSame('remove-background', Operation::remove_background(true)->key(), 'studio is not part of the key');
+        self::assertSame([], Operation::remove_background(null, 'atlas')->params(), 'atlas is the default');
+        self::assertSame(['model' => 'muse'], Operation::remove_background(null, 'muse')->params());
+        self::assertSame(['studio' => true, 'model' => 'lumen'], Operation::remove_background(true, 'lumen')->params());
+        self::assertSame('remove-background', Operation::remove_background(null, 'lumen')->key(), 'the model is not part of the key');
         self::assertSame(['scale' => 4], Operation::upscale(4)->params());
         self::assertSame(['marketplace' => 'ebay'], Operation::fix('ebay')->params());
 

@@ -70,6 +70,15 @@ final class Command {
 	 * [--studio]
 	 * : The photos are studio shots (a product on a plain light backdrop, as in a light tent): also keep the box, case or lid shown with the product. Overrides the "Studio shots" setting for this run; --no-studio turns it off for this run.
 	 *
+	 * [--model=<model>]
+	 * : The model that finds the subject: atlas (everyday product photos), lumen (pale packaging on a light backdrop, and close-ups where the product fills the photo) or muse (people: portraits, and models wearing the product). Each costs the same. Overrides the "Model" setting for this run.
+	 * ---
+	 * options:
+	 *   - atlas
+	 *   - lumen
+	 *   - muse
+	 * ---
+	 *
 	 * [--porcelain]
 	 * : Print only the new attachment IDs.
 	 *
@@ -77,6 +86,7 @@ final class Command {
 	 *
 	 *     wp photos-sh remove-background 12 13
 	 *     wp photos-sh remove-background 14 --studio
+	 *     wp photos-sh remove-background 15 --model=lumen
 	 *
 	 * @subcommand remove-background
 	 *
@@ -85,8 +95,16 @@ final class Command {
 	 */
 	public function remove_background( array $args, array $assoc_args ): void {
 		$studio = isset( $assoc_args['studio'] ) ? filter_var( $assoc_args['studio'], FILTER_VALIDATE_BOOLEAN ) : null;
+		$model  = isset( $assoc_args['model'] ) && is_string( $assoc_args['model'] ) ? $assoc_args['model'] : null;
+		try {
+			$operation = Operation::remove_background( $studio, $model );
+		} catch ( \InvalidArgumentException $error ) {
+			WP_CLI::error( 'Unknown model. Use one of: ' . implode( ', ', array_keys( Operation::MODELS ) ) . '.' );
 
-		$this->run( Operation::remove_background( $studio ), $args, $assoc_args );
+			return;
+		}
+
+		$this->run( $operation, $args, $assoc_args );
 	}
 
 	/**

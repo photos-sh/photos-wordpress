@@ -79,7 +79,7 @@ final class SettingsTest extends TestCase
         WpStubs::$options[Settings::OPTION] = ['api_key' => 'saved-key', 'base_url' => ''];
 
         self::assertSame(
-            ['api_key' => 'saved-key', 'base_url' => '', 'studio' => false],
+            ['api_key' => 'saved-key', 'base_url' => '', 'studio' => false, 'model' => 'atlas'],
             (new Settings())->sanitize(['api_key' => '  ', 'base_url' => '']),
         );
     }
@@ -97,9 +97,9 @@ final class SettingsTest extends TestCase
     public function testSanitizeIsStableWhenWordPressRunsItTwice(): void
     {
         $settings = new Settings();
-        $once = $settings->sanitize(['api_key' => 'new-key', 'base_url' => 'http://127.0.0.1:8098/api/', 'studio' => '1']);
+        $once = $settings->sanitize(['api_key' => 'new-key', 'base_url' => 'http://127.0.0.1:8098/api/', 'studio' => '1', 'model' => 'muse']);
 
-        self::assertSame(['api_key' => 'new-key', 'base_url' => 'http://127.0.0.1:8098/api', 'studio' => true], $once);
+        self::assertSame(['api_key' => 'new-key', 'base_url' => 'http://127.0.0.1:8098/api', 'studio' => true, 'model' => 'muse'], $once);
         self::assertSame($once, $settings->sanitize($once));
     }
 
@@ -114,6 +114,23 @@ final class SettingsTest extends TestCase
         self::assertTrue($settings->sanitize(['studio' => '1'])['studio']);
         self::assertFalse($settings->sanitize(['api_key' => ''])['studio'], 'an unticked box is not submitted');
         self::assertFalse($settings->sanitize('nonsense')['studio']);
+    }
+
+    public function testTheModelIsAtlasUntilChosen(): void
+    {
+        self::assertSame('atlas', (new Settings())->model());
+
+        WpStubs::$options[Settings::OPTION] = ['api_key' => 'saved-key', 'base_url' => '', 'model' => 'lumen'];
+        $settings = new Settings();
+        self::assertSame('lumen', $settings->model());
+
+        self::assertSame('muse', $settings->sanitize(['model' => 'muse'])['model']);
+        self::assertSame('lumen', $settings->sanitize(['model' => 'orion'])['model'], 'an unknown model keeps the saved one');
+        self::assertSame('lumen', $settings->sanitize(['api_key' => ''])['model']);
+        self::assertSame('lumen', $settings->sanitize('nonsense')['model']);
+
+        WpStubs::$options[Settings::OPTION] = ['model' => 'orion'];
+        self::assertSame('atlas', (new Settings())->model(), 'an unknown saved model is atlas');
     }
 
     public function testSanitizeTheBaseUrl(): void

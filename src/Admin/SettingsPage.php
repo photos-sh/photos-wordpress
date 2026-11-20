@@ -10,13 +10,14 @@ namespace PhotosSh\WordPress\Admin;
 use PhotosSh\Photos;
 use PhotosSh\WordPress\ClientFactory;
 use PhotosSh\WordPress\ErrorMessages;
+use PhotosSh\WordPress\Operation;
 use PhotosSh\WordPress\Settings;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * The settings page: the API key, the connected account, background
- * removal's "Studio shots", the base URL.
+ * removal's "Studio shots" and "Model", the base URL.
  */
 final class SettingsPage {
 
@@ -119,6 +120,14 @@ final class SettingsPage {
 			self::SLUG,
 			'photos_sh_remove_background',
 			[ 'label_for' => 'photos-sh-studio' ]
+		);
+		add_settings_field(
+			'photos_sh_model',
+			__( 'Model', 'photos-sh' ),
+			[ $this, 'render_model_field' ],
+			self::SLUG,
+			'photos_sh_remove_background',
+			[ 'label_for' => 'photos-sh-model' ]
 		);
 
 		add_settings_section( 'photos_sh_advanced', __( 'Advanced', 'photos-sh' ), '__return_empty_string', self::SLUG );
@@ -282,6 +291,37 @@ final class SettingsPage {
 		echo '<p class="description">';
 		esc_html_e( 'Your product photos are taken on a plain light backdrop (a light tent): background removal also keeps the box, case or lid shown with the product.', 'photos-sh' );
 		echo '</p>';
+	}
+
+	/**
+	 * Prints the "Model" select, with what each model is for.
+	 */
+	public function render_model_field(): void {
+		printf( '<select id="photos-sh-model" name="%s[model]">', esc_attr( Settings::OPTION ) );
+		foreach ( Operation::MODELS as $model => $title ) {
+			printf(
+				'<option value="%s" %s>%s</option>',
+				esc_attr( $model ),
+				selected( $this->settings->model(), $model, false ),
+				esc_html(
+					Operation::DEFAULT_MODEL === $model
+						/* translators: %s: a model's name, such as Atlas. */
+						? sprintf( __( '%s (default)', 'photos-sh' ), $title )
+						: $title
+				)
+			);
+		}
+		echo '</select>';
+		echo '<p class="description">';
+		esc_html_e( 'The model that finds the subject. Each costs the same; try another when one drops part of the product.', 'photos-sh' );
+		echo '</p>';
+		foreach ( Operation::MODELS as $model => $title ) {
+			printf(
+				'<p class="description"><strong>%s</strong>: %s</p>',
+				esc_html( $title ),
+				esc_html( Operation::model_description( $model ) )
+			);
+		}
 	}
 
 	/**

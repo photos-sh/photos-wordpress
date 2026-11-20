@@ -151,6 +151,38 @@ final class ProcessorTest extends TestCase
         self::assertSame($url, $transport->requests[0]->url);
     }
 
+    /**
+     * @return iterable<string, array{string|null, Operation, string}>
+     */
+    public static function model(): iterable
+    {
+        yield 'never chosen' => [null, Operation::remove_background(), 'http://engine.test/api/v1/remove-background'];
+        yield 'the setting atlas' => ['atlas', Operation::remove_background(), 'http://engine.test/api/v1/remove-background'];
+        yield 'the setting lumen' => ['lumen', Operation::remove_background(), 'http://engine.test/api/v1/remove-background?model=lumen'];
+        yield 'an unknown setting' => ['orion', Operation::remove_background(), 'http://engine.test/api/v1/remove-background'];
+        yield 'muse for this run' => ['lumen', Operation::remove_background(null, 'muse'), 'http://engine.test/api/v1/remove-background?model=muse'];
+        yield 'atlas for this run' => ['muse', Operation::remove_background(null, 'atlas'), 'http://engine.test/api/v1/remove-background'];
+    }
+
+    #[DataProvider('model')]
+    public function testRemoveBackgroundFollowsTheModelSetting(?string $setting, Operation $operation, string $url): void
+    {
+        if (null !== $setting) {
+            WpStubs::$options[Settings::OPTION]['model'] = $setting;
+        }
+        $settings = new Settings();
+        $transport = new RecordingTransport(new Response(200, ['Content-Type' => 'image/png'], 'png'));
+
+        try {
+            (new Processor(new ClientFactory($settings, $transport), $settings))->process(12, $operation);
+            self::fail('The stubbed upload always fails.');
+        } catch (ProcessingException) {
+        }
+
+        self::assertCount(1, $transport->requests);
+        self::assertSame($url, $transport->requests[0]->url);
+    }
+
     public function testResultNoteReadsTheResultsMeta(): void
     {
         WpStubs::$meta[40][Processor::META_RESULT] = ['faces' => 3];

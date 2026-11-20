@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+## 1.2.0 (2026-11-20)
+
+- Settings → Photos.sh → Remove background → "Model": the model that finds
+  the subject, a select with a description of each. Atlas (the default;
+  everyday product photos: a product alone or with its box, on any
+  backdrop), Lumen (pale packaging on a light backdrop, such as a cream or
+  wooden box beside a bottle, and close-ups where the product fills the
+  photo) or Muse (people: portraits, and models wearing the product). Each
+  costs the same. It applies to every Remove background (the row action, the
+  edit screen, the bulk actions, the WooCommerce bulk action and WP-CLI). The
+  API is sent `model=lumen` or `model=muse` only when one of those is chosen;
+  with Atlas the parameter is left out and the API's default applies. The
+  setting is saved in `photos_sh_settings` as `model`; sites that never chose
+  one use Atlas.
+- WP-CLI: `wp photos-sh remove-background --model=atlas|lumen|muse` overrides
+  the setting for that run.
+- A result made with Lumen or Muse has `['model' => 'lumen']` (or `'muse'`)
+  in `_photos_sh_params`, next to `'studio' => true` on a studio shot.
+- Needs photos-sh/photos 1.3 (`removeBackground(model: …)`).
+
 ## 1.1.0 (2026-11-16)
 
 - Settings → Photos.sh → Remove background → "Studio shots" (off by default):

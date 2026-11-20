@@ -12,7 +12,8 @@ use PhotosSh\Photos;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Reads the API key, the base URL and the "Studio shots" setting.
+ * Reads the API key, the base URL, and the "Studio shots" and "Model"
+ * settings of remove background.
  *
  * The key comes from the constant or environment variable `PHOTOS_API_KEY`
  * when one is set, and from the settings page otherwise.
@@ -88,14 +89,23 @@ final class Settings {
 	}
 
 	/**
+	 * The model remove background finds the subject with: a key of
+	 * Operation::MODELS. Atlas, the API's default, unless another is chosen.
+	 */
+	public function model(): string {
+		return $this->stored()['model'];
+	}
+
+	/**
 	 * Cleans the settings form's values before they are saved.
 	 *
 	 * An empty key field keeps the saved key (the form never shows it);
 	 * the "remove" checkbox clears it. An unticked "Studio shots" box is
-	 * not submitted at all, so a missing value means off.
+	 * not submitted at all, so a missing value means off. A model that is
+	 * not one of Operation::MODELS keeps the saved one.
 	 *
 	 * @param mixed $input The submitted values.
-	 * @return array{api_key: string, base_url: string, studio: bool}
+	 * @return array{api_key: string, base_url: string, studio: bool, model: string}
 	 */
 	public function sanitize( $input ): array {
 		$stored = $this->stored();
@@ -127,17 +137,23 @@ final class Settings {
 			}
 		}
 
+		$model = $stored['model'];
+		if ( isset( $input['model'] ) && is_string( $input['model'] ) && isset( Operation::MODELS[ $input['model'] ] ) ) {
+			$model = $input['model'];
+		}
+
 		return [
 			'api_key'  => $key,
 			'base_url' => $url,
 			'studio'   => ! empty( $input['studio'] ),
+			'model'    => $model,
 		];
 	}
 
 	/**
 	 * The saved option, with every field present.
 	 *
-	 * @return array{api_key: string, base_url: string, studio: bool}
+	 * @return array{api_key: string, base_url: string, studio: bool, model: string}
 	 */
 	private function stored(): array {
 		$option = get_option( self::OPTION, [] );
@@ -147,6 +163,7 @@ final class Settings {
 			'api_key'  => isset( $option['api_key'] ) && is_string( $option['api_key'] ) ? $option['api_key'] : '',
 			'base_url' => isset( $option['base_url'] ) && is_string( $option['base_url'] ) ? $option['base_url'] : '',
 			'studio'   => ! empty( $option['studio'] ),
+			'model'    => isset( $option['model'] ) && is_string( $option['model'] ) && isset( Operation::MODELS[ $option['model'] ] ) ? $option['model'] : Operation::DEFAULT_MODEL,
 		];
 	}
 
