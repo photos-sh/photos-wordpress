@@ -79,7 +79,7 @@ final class SettingsTest extends TestCase
         WpStubs::$options[Settings::OPTION] = ['api_key' => 'saved-key', 'base_url' => ''];
 
         self::assertSame(
-            ['api_key' => 'saved-key', 'base_url' => '', 'studio' => false, 'model' => 'atlas'],
+            ['api_key' => 'saved-key', 'base_url' => '', 'studio' => false, 'model' => 'atlas', 'shift' => 0, 'hardness' => 0, 'smooth' => 0],
             (new Settings())->sanitize(['api_key' => '  ', 'base_url' => '']),
         );
     }
@@ -97,9 +97,28 @@ final class SettingsTest extends TestCase
     public function testSanitizeIsStableWhenWordPressRunsItTwice(): void
     {
         $settings = new Settings();
-        $once = $settings->sanitize(['api_key' => 'new-key', 'base_url' => 'http://127.0.0.1:8098/api/', 'studio' => '1', 'model' => 'muse']);
+        $once = $settings->sanitize([
+            'api_key' => 'new-key',
+            'base_url' => 'http://127.0.0.1:8098/api/',
+            'studio' => '1',
+            'model' => 'muse',
+            'shift' => '-1.5',
+            'hardness' => '50',
+            'smooth' => '2',
+        ]);
 
-        self::assertSame(['api_key' => 'new-key', 'base_url' => 'http://127.0.0.1:8098/api', 'studio' => true, 'model' => 'muse'], $once);
+        self::assertSame(
+            [
+                'api_key' => 'new-key',
+                'base_url' => 'http://127.0.0.1:8098/api',
+                'studio' => true,
+                'model' => 'muse',
+                'shift' => -1.5,
+                'hardness' => 50,
+                'smooth' => 2,
+            ],
+            $once,
+        );
         self::assertSame($once, $settings->sanitize($once));
     }
 
@@ -131,6 +150,67 @@ final class SettingsTest extends TestCase
 
         WpStubs::$options[Settings::OPTION] = ['model' => 'orion'];
         self::assertSame('atlas', (new Settings())->model(), 'an unknown saved model is atlas');
+    }
+
+    public function testTheEdgeSettingsAreZeroUntilSet(): void
+    {
+        $settings = new Settings();
+        self::assertSame(0, $settings->shift());
+        self::assertSame(0, $settings->hardness());
+        self::assertSame(0, $settings->smooth());
+
+        // Settings saved before the edge settings existed.
+        WpStubs::$options[Settings::OPTION] = ['api_key' => 'saved-key', 'base_url' => '', 'studio' => true, 'model' => 'lumen'];
+        self::assertSame(0, $settings->shift());
+        self::assertSame(0, $settings->hardness());
+        self::assertSame(0, $settings->smooth());
+        self::assertSame(
+            ['api_key' => 'saved-key', 'base_url' => '', 'studio' => true, 'model' => 'lumen', 'shift' => 0, 'hardness' => 0, 'smooth' => 0],
+            $settings->sanitize(['studio' => '1']),
+        );
+
+        WpStubs::$options[Settings::OPTION] = ['api_key' => 'saved-key', 'base_url' => '', 'shift' => -1.5, 'hardness' => 50, 'smooth' => 2];
+        self::assertSame(-1.5, $settings->shift());
+        self::assertSame(50, $settings->hardness());
+        self::assertSame(2, $settings->smooth());
+    }
+
+    public function testSanitizeTheEdgeSettings(): void
+    {
+        WpStubs::$options[Settings::OPTION] = ['api_key' => 'saved-key', 'base_url' => '', 'shift' => -1.5, 'hardness' => 50, 'smooth' => 2];
+        $settings = new Settings();
+        $edges = static fn (mixed $input): array => array_intersect_key(
+            $settings->sanitize($input),
+            ['shift' => 0, 'hardness' => 0, 'smooth' => 0],
+        );
+        $saved = ['shift' => -1.5, 'hardness' => 50, 'smooth' => 2];
+
+        self::assertSame(
+            ['shift' => -2, 'hardness' => 100, 'smooth' => 0.5],
+            $edges(['shift' => '-2', 'hardness' => '100', 'smooth' => '0.5']),
+            'a negative shift is kept',
+        );
+        self::assertSame(['shift' => -10, 'hardness' => 0, 'smooth' => 10], $edges(['shift' => '-10', 'hardness' => '0', 'smooth' => '10']));
+        self::assertSame(['shift' => 10, 'hardness' => 50, 'smooth' => 2], $edges(['shift' => '10.0']), 'a field that is not submitted keeps the saved value');
+
+        self::assertSame($saved, $edges(['shift' => '-10.5', 'hardness' => '101', 'smooth' => '11']), 'a number outside the range keeps the saved one');
+        self::assertSame($saved, $edges(['shift' => '11', 'hardness' => '-1', 'smooth' => '-0.5']));
+        self::assertSame($saved, $edges(['shift' => 'inward', 'hardness' => '50%', 'smooth' => '1,5']), 'so does text that is not a number');
+        self::assertSame($saved, $edges(['shift' => ['-2'], 'hardness' => true, 'smooth' => null]));
+        self::assertSame($saved, $edges(['api_key' => '']));
+        self::assertSame($saved, $edges('nonsense'));
+
+        self::assertSame(['shift' => 0, 'hardness' => 0, 'smooth' => 0], $edges(['shift' => '', 'hardness' => ' ', 'smooth' => '0']), 'an empty field is 0');
+
+        WpStubs::$options[Settings::OPTION] = ['shift' => 11, 'hardness' => 'hard', 'smooth' => -1];
+        self::assertSame(0, $settings->shift(), 'a saved value outside the range is 0');
+        self::assertSame(0, $settings->hardness());
+        self::assertSame(0, $settings->smooth());
+
+        WpStubs::$options[Settings::OPTION] = ['shift' => '-1.5', 'hardness' => '50', 'smooth' => '2.0'];
+        self::assertSame(-1.5, $settings->shift(), 'a number saved as text is read as a number');
+        self::assertSame(50, $settings->hardness());
+        self::assertSame(2, $settings->smooth());
     }
 
     public function testSanitizeTheBaseUrl(): void

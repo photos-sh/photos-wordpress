@@ -2,6 +2,30 @@
 
 ## Unreleased
 
+## 1.3.0 (2026-11-24)
+
+- Settings → Photos.sh → Remove background: three edge settings, each a
+  number field, 0 by default. "Edge shift" (-10 to 10 px) moves the cutout's
+  edge: inward when negative, outward when positive; -1 to -2 trims the light
+  rim a dark product shows on a dark page. "Edge hardness" (0 to 100) makes
+  the edge crisper, about a pixel wide at 100; on a dark page, pair it with a
+  small negative shift. "Edge smoothing" (0 to 10) irons out ripples in the
+  outline; from about 4 it rounds small corners and can break thin parts such
+  as a wire stand. They apply to every Remove background (the row action, the
+  edit screen, the bulk actions, the WooCommerce bulk action and WP-CLI). The
+  API is sent `shift`, `hardness` or `smooth` only when it is not 0: a site
+  that leaves them at 0 makes the same request as before. They are saved in
+  `photos_sh_settings` as `shift`, `hardness` and `smooth`; settings saved
+  before this version use 0. A value that is not a number in its range is
+  not saved: the saved one is kept. An empty field is 0.
+- WP-CLI: `wp photos-sh remove-background --shift=<px> --hardness=<0-100>
+  --smooth=<0-10>` override the settings for that run.
+- A result made with an edge setting other than 0 has it in
+  `_photos_sh_params`, such as `['shift' => -1.5, 'hardness' => 50]`, next to
+  `studio` and `model`.
+- Needs photos-sh/photos 1.4 (`removeBackground(shift: …, hardness: …,
+  smooth: …)`).
+
 ## 1.2.0 (2026-11-20)
 
 - Settings → Photos.sh → Remove background → "Model": the model that finds

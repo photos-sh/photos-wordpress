@@ -12,8 +12,8 @@ use PhotosSh\Photos;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Reads the API key, the base URL, and the "Studio shots" and "Model"
- * settings of remove background.
+ * Reads the API key, the base URL, and the "Studio shots", "Model" and
+ * edge settings of remove background.
  *
  * The key comes from the constant or environment variable `PHOTOS_API_KEY`
  * when one is set, and from the settings page otherwise.
@@ -97,15 +97,42 @@ final class Settings {
 	}
 
 	/**
+	 * How far remove background moves the cutout's edge, in pixels: from
+	 * -10 (inward) to 10 (outward). 0 by default, which leaves the edge
+	 * where it is.
+	 */
+	public function shift(): int|float {
+		return $this->stored()['shift'];
+	}
+
+	/**
+	 * How crisp remove background makes the edge: from 0 (as it is, the
+	 * default) to 100 (about a pixel wide).
+	 */
+	public function hardness(): int|float {
+		return $this->stored()['hardness'];
+	}
+
+	/**
+	 * How much remove background irons out the ripples of the outline:
+	 * from 0 (as it is, the default) to 10.
+	 */
+	public function smooth(): int|float {
+		return $this->stored()['smooth'];
+	}
+
+	/**
 	 * Cleans the settings form's values before they are saved.
 	 *
 	 * An empty key field keeps the saved key (the form never shows it);
 	 * the "remove" checkbox clears it. An unticked "Studio shots" box is
 	 * not submitted at all, so a missing value means off. A model that is
-	 * not one of Operation::MODELS keeps the saved one.
+	 * not one of Operation::MODELS keeps the saved one. So does an edge
+	 * setting that is not a number in its range (Operation::EDGES); an
+	 * empty edge field means 0.
 	 *
 	 * @param mixed $input The submitted values.
-	 * @return array{api_key: string, base_url: string, studio: bool, model: string}
+	 * @return array{api_key: string, base_url: string, studio: bool, model: string, shift: int|float, hardness: int|float, smooth: int|float}
 	 */
 	public function sanitize( $input ): array {
 		$stored = $this->stored();
@@ -147,13 +174,37 @@ final class Settings {
 			'base_url' => $url,
 			'studio'   => ! empty( $input['studio'] ),
 			'model'    => $model,
+			'shift'    => self::sanitize_edge( 'shift', $input, $stored['shift'] ),
+			'hardness' => self::sanitize_edge( 'hardness', $input, $stored['hardness'] ),
+			'smooth'   => self::sanitize_edge( 'smooth', $input, $stored['smooth'] ),
 		];
 	}
 
 	/**
-	 * The saved option, with every field present.
+	 * An edge setting as the settings form gave it: the submitted number,
+	 * 0 for an empty field, and the saved value when the field was not
+	 * submitted or does not hold a number in the setting's range.
 	 *
-	 * @return array{api_key: string, base_url: string, studio: bool, model: string}
+	 * @param string       $name  A key of Operation::EDGES.
+	 * @param array<mixed> $input The submitted values.
+	 * @param int|float    $saved The saved value.
+	 */
+	private static function sanitize_edge( string $name, array $input, int|float $saved ): int|float {
+		if ( ! isset( $input[ $name ] ) ) {
+			return $saved;
+		}
+		if ( is_string( $input[ $name ] ) && '' === trim( $input[ $name ] ) ) {
+			return 0;
+		}
+
+		return Operation::edge_value( $name, $input[ $name ] ) ?? $saved;
+	}
+
+	/**
+	 * The saved option, with every field present. An edge setting that was
+	 * never saved, or is not a number in its range, is 0.
+	 *
+	 * @return array{api_key: string, base_url: string, studio: bool, model: string, shift: int|float, hardness: int|float, smooth: int|float}
 	 */
 	private function stored(): array {
 		$option = get_option( self::OPTION, [] );
@@ -164,6 +215,9 @@ final class Settings {
 			'base_url' => isset( $option['base_url'] ) && is_string( $option['base_url'] ) ? $option['base_url'] : '',
 			'studio'   => ! empty( $option['studio'] ),
 			'model'    => isset( $option['model'] ) && is_string( $option['model'] ) && isset( Operation::MODELS[ $option['model'] ] ) ? $option['model'] : Operation::DEFAULT_MODEL,
+			'shift'    => Operation::edge_value( 'shift', $option['shift'] ?? 0 ) ?? 0,
+			'hardness' => Operation::edge_value( 'hardness', $option['hardness'] ?? 0 ) ?? 0,
+			'smooth'   => Operation::edge_value( 'smooth', $option['smooth'] ?? 0 ) ?? 0,
 		];
 	}
 

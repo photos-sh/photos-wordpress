@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * The settings page: the API key, the connected account, background
- * removal's "Studio shots" and "Model", the base URL.
+ * removal's "Studio shots", "Model" and edge settings, the base URL.
  */
 final class SettingsPage {
 
@@ -128,6 +128,30 @@ final class SettingsPage {
 			self::SLUG,
 			'photos_sh_remove_background',
 			[ 'label_for' => 'photos-sh-model' ]
+		);
+		add_settings_field(
+			'photos_sh_shift',
+			__( 'Edge shift', 'photos-sh' ),
+			[ $this, 'render_shift_field' ],
+			self::SLUG,
+			'photos_sh_remove_background',
+			[ 'label_for' => 'photos-sh-shift' ]
+		);
+		add_settings_field(
+			'photos_sh_hardness',
+			__( 'Edge hardness', 'photos-sh' ),
+			[ $this, 'render_hardness_field' ],
+			self::SLUG,
+			'photos_sh_remove_background',
+			[ 'label_for' => 'photos-sh-hardness' ]
+		);
+		add_settings_field(
+			'photos_sh_smooth',
+			__( 'Edge smoothing', 'photos-sh' ),
+			[ $this, 'render_smooth_field' ],
+			self::SLUG,
+			'photos_sh_remove_background',
+			[ 'label_for' => 'photos-sh-smooth' ]
 		);
 
 		add_settings_section( 'photos_sh_advanced', __( 'Advanced', 'photos-sh' ), '__return_empty_string', self::SLUG );
@@ -322,6 +346,57 @@ final class SettingsPage {
 				esc_html( Operation::model_description( $model ) )
 			);
 		}
+	}
+
+	/**
+	 * Prints the "Edge shift" number field.
+	 */
+	public function render_shift_field(): void {
+		$this->render_edge_field( 'shift', $this->settings->shift(), '0.5' );
+		echo '<p class="description">';
+		esc_html_e( 'Moves the cutout\'s edge, in pixels, from -10 to 10: inward when negative, outward when positive. A shift of -1 to -2 trims the light rim a dark product shows on a dark page. 0 leaves the edge where it is.', 'photos-sh' );
+		echo '</p>';
+	}
+
+	/**
+	 * Prints the "Edge hardness" number field.
+	 */
+	public function render_hardness_field(): void {
+		$this->render_edge_field( 'hardness', $this->settings->hardness(), '1' );
+		echo '<p class="description">';
+		esc_html_e( 'Makes the edge crisper, from 0 (as it is) to 100 (about a pixel wide). On a dark page, pair it with a small negative edge shift.', 'photos-sh' );
+		echo '</p>';
+	}
+
+	/**
+	 * Prints the "Edge smoothing" number field.
+	 */
+	public function render_smooth_field(): void {
+		$this->render_edge_field( 'smooth', $this->settings->smooth(), '0.5' );
+		echo '<p class="description">';
+		esc_html_e( 'Irons out ripples in the outline, from 0 (as it is) to 10. From about 4 it rounds small corners and can break thin parts such as a wire stand.', 'photos-sh' );
+		echo '</p>';
+	}
+
+	/**
+	 * Prints the number field of one of background removal's edge settings.
+	 *
+	 * @param string    $name  A key of Operation::EDGES.
+	 * @param int|float $value The saved value.
+	 * @param string    $step  The step between the values the field takes.
+	 */
+	private function render_edge_field( string $name, int|float $value, string $step ): void {
+		[ $min, $max ] = Operation::EDGES[ $name ];
+
+		printf(
+			'<input type="number" id="photos-sh-%1$s" name="%2$s[%1$s]" class="small-text" value="%3$s" min="%4$s" max="%5$s" step="%6$s" />',
+			esc_attr( $name ),
+			esc_attr( Settings::OPTION ),
+			esc_attr( (string) $value ),
+			esc_attr( (string) $min ),
+			esc_attr( (string) $max ),
+			esc_attr( $step )
+		);
 	}
 
 	/**

@@ -79,6 +79,15 @@ final class Command {
 	 *   - muse
 	 * ---
 	 *
+	 * [--shift=<px>]
+	 * : Moves the cutout's edge, in pixels, from -10 to 10: inward when negative, outward when positive. A shift of -1 to -2 trims the light rim a dark product shows on a dark page. Overrides the "Edge shift" setting for this run.
+	 *
+	 * [--hardness=<amount>]
+	 * : Makes the edge crisper, from 0 (as it is) to 100 (about a pixel wide). On a dark page, pair it with a small negative --shift. Overrides the "Edge hardness" setting for this run.
+	 *
+	 * [--smooth=<amount>]
+	 * : Irons out ripples in the outline, from 0 (as it is) to 10. From about 4 it rounds small corners and can break thin parts such as a wire stand. Overrides the "Edge smoothing" setting for this run.
+	 *
 	 * [--porcelain]
 	 * : Print only the new attachment IDs.
 	 *
@@ -87,6 +96,7 @@ final class Command {
 	 *     wp photos-sh remove-background 12 13
 	 *     wp photos-sh remove-background 14 --studio
 	 *     wp photos-sh remove-background 15 --model=lumen
+	 *     wp photos-sh remove-background 16 --shift=-1.5 --hardness=50
 	 *
 	 * @subcommand remove-background
 	 *
@@ -96,8 +106,26 @@ final class Command {
 	public function remove_background( array $args, array $assoc_args ): void {
 		$studio = isset( $assoc_args['studio'] ) ? filter_var( $assoc_args['studio'], FILTER_VALIDATE_BOOLEAN ) : null;
 		$model  = isset( $assoc_args['model'] ) && is_string( $assoc_args['model'] ) ? $assoc_args['model'] : null;
+
+		$edges = [
+			'shift'    => null,
+			'hardness' => null,
+			'smooth'   => null,
+		];
+		foreach ( Operation::EDGES as $name => [ $min, $max ] ) {
+			if ( ! isset( $assoc_args[ $name ] ) ) {
+				continue;
+			}
+			$edges[ $name ] = Operation::edge_value( $name, $assoc_args[ $name ] );
+			if ( null === $edges[ $name ] ) {
+				WP_CLI::error( sprintf( '--%s must be a number from %d to %d.', $name, $min, $max ) );
+
+				return;
+			}
+		}
+
 		try {
-			$operation = Operation::remove_background( $studio, $model );
+			$operation = Operation::remove_background( $studio, $model, $edges['shift'], $edges['hardness'], $edges['smooth'] );
 		} catch ( \InvalidArgumentException $error ) {
 			WP_CLI::error( 'Unknown model. Use one of: ' . implode( ', ', array_keys( Operation::MODELS ) ) . '.' );
 

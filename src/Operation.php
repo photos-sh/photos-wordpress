@@ -72,6 +72,17 @@ final class Operation {
 	public const DEFAULT_MODEL = 'atlas';
 
 	/**
+	 * The edge settings of remove background, each with the lowest and the
+	 * highest value the API takes. Each is 0 by default. A 0 is not sent:
+	 * the API then leaves the edge as it is.
+	 */
+	public const EDGES = [
+		'shift'    => [ -10, 10 ],
+		'hardness' => [ 0, 100 ],
+		'smooth'   => [ 0, 10 ],
+	];
+
+	/**
 	 * One of the operation constants.
 	 *
 	 * @var string
@@ -117,35 +128,73 @@ final class Operation {
 	public ?string $model;
 
 	/**
+	 * For remove background: how far the cutout's edge is moved, in pixels,
+	 * from -10 (inward) to 10 (outward). Null leaves it to the "Edge shift"
+	 * setting.
+	 *
+	 * @var int|float|null
+	 */
+	public int|float|null $shift;
+
+	/**
+	 * For remove background: how crisp the edge is, from 0 to 100 (about a
+	 * pixel wide). Null leaves it to the "Edge hardness" setting.
+	 *
+	 * @var int|float|null
+	 */
+	public int|float|null $hardness;
+
+	/**
+	 * For remove background: how much the ripples of the outline are ironed
+	 * out, from 0 to 10. Null leaves it to the "Edge smoothing" setting.
+	 *
+	 * @var int|float|null
+	 */
+	public int|float|null $smooth;
+
+	/**
 	 * Use the named constructors.
 	 *
-	 * @param string      $name        One of the operation constants.
-	 * @param int|null    $scale       The upscale factor.
-	 * @param string|null $marketplace The marketplace's name.
-	 * @param bool        $replace     For alt text: whether text that is already there is replaced.
-	 * @param bool|null   $studio      For remove background: whether the photo is a studio shot.
-	 * @param string|null $model       For remove background: the model, a key of MODELS.
+	 * @param string         $name        One of the operation constants.
+	 * @param int|null       $scale       The upscale factor.
+	 * @param string|null    $marketplace The marketplace's name.
+	 * @param bool           $replace     For alt text: whether text that is already there is replaced.
+	 * @param bool|null      $studio      For remove background: whether the photo is a studio shot.
+	 * @param string|null    $model       For remove background: the model, a key of MODELS.
+	 * @param int|float|null $shift       For remove background: how far the edge is moved, in pixels.
+	 * @param int|float|null $hardness    For remove background: how crisp the edge is.
+	 * @param int|float|null $smooth      For remove background: how much the outline is smoothed.
 	 */
-	private function __construct( string $name, ?int $scale = null, ?string $marketplace = null, bool $replace = false, ?bool $studio = null, ?string $model = null ) {
+	private function __construct( string $name, ?int $scale = null, ?string $marketplace = null, bool $replace = false, ?bool $studio = null, ?string $model = null, int|float|null $shift = null, int|float|null $hardness = null, int|float|null $smooth = null ) {
 		$this->name        = $name;
 		$this->scale       = $scale;
 		$this->marketplace = $marketplace;
 		$this->replace     = $replace;
 		$this->studio      = $studio;
 		$this->model       = $model;
+		$this->shift       = $shift;
+		$this->hardness    = $hardness;
+		$this->smooth      = $smooth;
 	}
 
 	/**
 	 * Remove the background.
 	 *
-	 * @param bool|null   $studio Whether the photo is a studio shot (a product on a plain light
-	 *                            backdrop), so that the box, case or lid shown with the product is
-	 *                            kept too. Null leaves it to the "Studio shots" setting.
-	 * @param string|null $model  The model that finds the subject, a key of MODELS. Null leaves
-	 *                            it to the "Model" setting.
-	 * @throws \InvalidArgumentException For an unknown model.
+	 * @param bool|null      $studio   Whether the photo is a studio shot (a product on a plain light
+	 *                                 backdrop), so that the box, case or lid shown with the product
+	 *                                 is kept too. Null leaves it to the "Studio shots" setting.
+	 * @param string|null    $model    The model that finds the subject, a key of MODELS. Null leaves
+	 *                                 it to the "Model" setting.
+	 * @param int|float|null $shift    Moves the cutout's edge, in pixels, from -10 to 10: inward when
+	 *                                 negative, outward when positive. Null leaves it to the "Edge
+	 *                                 shift" setting.
+	 * @param int|float|null $hardness Makes the edge crisper, from 0 to 100. Null leaves it to the
+	 *                                 "Edge hardness" setting.
+	 * @param int|float|null $smooth   Irons out ripples in the outline, from 0 to 10. Null leaves it
+	 *                                 to the "Edge smoothing" setting.
+	 * @throws \InvalidArgumentException For an unknown model, or an edge setting outside its range.
 	 */
-	public static function remove_background( ?bool $studio = null, ?string $model = null ): self {
+	public static function remove_background( ?bool $studio = null, ?string $model = null, int|float|null $shift = null, int|float|null $hardness = null, int|float|null $smooth = null ): self {
 		if ( null !== $model ) {
 			$model = strtolower( trim( $model ) );
 			if ( ! isset( self::MODELS[ $model ] ) ) {
@@ -153,7 +202,22 @@ final class Operation {
 			}
 		}
 
-		return new self( self::REMOVE_BACKGROUND, null, null, false, $studio, $model );
+		$edges = [
+			'shift'    => $shift,
+			'hardness' => $hardness,
+			'smooth'   => $smooth,
+		];
+		foreach ( $edges as $name => $value ) {
+			if ( null === $value ) {
+				continue;
+			}
+			$edges[ $name ] = self::edge_value( $name, $value );
+			if ( null === $edges[ $name ] ) {
+				throw new \InvalidArgumentException( 'An edge setting is outside its range.' );
+			}
+		}
+
+		return new self( self::REMOVE_BACKGROUND, null, null, false, $studio, $model, $edges['shift'], $edges['hardness'], $edges['smooth'] );
 	}
 
 	/**
@@ -181,6 +245,50 @@ final class Operation {
 	 */
 	public function api_model(): ?string {
 		return null !== $this->model && self::DEFAULT_MODEL !== $this->model ? $this->model : null;
+	}
+
+	/**
+	 * The number a value gives for an edge setting of remove background,
+	 * or null when it is not a number in the setting's range. A whole
+	 * number comes back as an integer.
+	 *
+	 * @param string $name  A key of EDGES.
+	 * @param mixed  $value A number, or a string that holds one.
+	 */
+	public static function edge_value( string $name, $value ): int|float|null {
+		if ( ! isset( self::EDGES[ $name ] ) || ! is_numeric( $value ) ) {
+			return null;
+		}
+		$number        = (float) $value;
+		[ $min, $max ] = self::EDGES[ $name ];
+		if ( ! is_finite( $number ) || $number < $min || $number > $max ) {
+			return null;
+		}
+
+		return floor( $number ) === $number ? (int) $number : $number;
+	}
+
+	/**
+	 * The edge settings to send to the API for remove background, by name:
+	 * those that are set and are not 0, the API's default.
+	 *
+	 * @return array<string, int|float>
+	 */
+	public function api_edges(): array {
+		$set = [
+			'shift'    => $this->shift,
+			'hardness' => $this->hardness,
+			'smooth'   => $this->smooth,
+		];
+
+		$edges = [];
+		foreach ( $set as $name => $value ) {
+			if ( null !== $value && 0.0 !== (float) $value ) {
+				$edges[ $name ] = $value;
+			}
+		}
+
+		return $edges;
 	}
 
 	/**
@@ -330,7 +438,7 @@ final class Operation {
 	/**
 	 * The parameters, for the result attachment's meta.
 	 *
-	 * @return array<string, int|string|bool>
+	 * @return array<string, int|float|string|bool>
 	 */
 	public function params(): array {
 		if ( self::REMOVE_BACKGROUND === $this->name ) {
@@ -343,7 +451,7 @@ final class Operation {
 				$params['model'] = $model;
 			}
 
-			return $params;
+			return $params + $this->api_edges();
 		}
 		if ( null !== $this->scale ) {
 			return [ 'scale' => $this->scale ];
@@ -489,8 +597,9 @@ final class Operation {
 
 	/**
 	 * Runs the operation on an image file through the API. Remove
-	 * background sends `studio` only when the operation's is true, and
-	 * `model` only for a model other than Atlas, the API's default.
+	 * background sends `studio` only when the operation's is true, `model`
+	 * only for a model other than Atlas, the API's default, and `shift`,
+	 * `hardness` and `smooth` only when they are not 0.
 	 *
 	 * @param Photos $photos The API client.
 	 * @param string $path   The image file.
@@ -500,10 +609,15 @@ final class Operation {
 	public function run( Photos $photos, string $path ): ImageResult {
 		switch ( $this->name ) {
 			case self::REMOVE_BACKGROUND:
+				$edges = $this->api_edges();
+
 				return $photos->removeBackground(
 					$path,
 					studio: true === $this->studio ? true : null,
 					model: $this->api_model(),
+					shift: $edges['shift'] ?? null,
+					hardness: $edges['hardness'] ?? null,
+					smooth: $edges['smooth'] ?? null,
 				);
 			case self::UPSCALE:
 				return $photos->upscale( $path, $this->scale );

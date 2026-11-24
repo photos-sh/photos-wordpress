@@ -41,6 +41,12 @@ final class OperationTest extends TestCase
         yield 'remove background with atlas, the default' => [Operation::remove_background(null, 'atlas'), '/api/v1/remove-background'];
         yield 'remove background with lumen' => [Operation::remove_background(null, 'lumen'), '/api/v1/remove-background?model=lumen'];
         yield 'remove background with muse' => [Operation::remove_background(false, 'Muse'), '/api/v1/remove-background?model=muse'];
+        yield 'remove background, the edge settings at 0' => [Operation::remove_background(null, null, 0, 0, 0), '/api/v1/remove-background'];
+        yield 'remove background, the edge settings at 0.0' => [Operation::remove_background(null, null, 0.0, -0.0, 0.0), '/api/v1/remove-background'];
+        yield 'remove background, the edge moved inward' => [Operation::remove_background(null, null, -1.5), '/api/v1/remove-background?shift=-1.5'];
+        yield 'remove background, a crisper edge' => [Operation::remove_background(null, null, null, 50), '/api/v1/remove-background?hardness=50'];
+        yield 'remove background, a smoother outline' => [Operation::remove_background(null, null, 0, 0, 2), '/api/v1/remove-background?smooth=2'];
+        yield 'remove background, a whole number given as a float' => [Operation::remove_background(null, null, 1.0, 100.0, 10.0), '/api/v1/remove-background?smooth=10&shift=1&hardness=100'];
         yield 'upscale 2x' => [Operation::upscale(2), '/api/v1/upscale?scale=2'];
         yield 'upscale 4x' => [Operation::upscale(4), '/api/v1/upscale?scale=4'];
         yield 'remove text' => [Operation::remove_text(), '/api/v1/remove-text'];
@@ -155,6 +161,71 @@ final class OperationTest extends TestCase
         self::assertEquals(['studio' => 'true', 'model' => 'lumen'], $query);
     }
 
+    public function testRemoveBackgroundSendsTheEdgeSettingsThatAreNotZero(): void
+    {
+        $transport = new RecordingTransport(new Response(200, ['Content-Type' => 'image/png'], 'png'));
+        $photos = new Photos('key', 'http://engine.test/api', transport: $transport);
+
+        Operation::remove_background(null, null, -1.5, 50, 2)->run($photos, $this->image);
+        Operation::remove_background(true, 'lumen', -1.5, 0, 2)->run($photos, $this->image);
+
+        self::assertCount(2, $transport->requests);
+        // The library puts them in its own order.
+        self::assertSame('http://engine.test/api/v1/remove-background?smooth=2&shift=-1.5&hardness=50', $transport->requests[0]->url);
+        self::assertSame('http://engine.test/api/v1/remove-background?studio=true&model=lumen&smooth=2&shift=-1.5', $transport->requests[1]->url);
+    }
+
+    public function testEdgeValues(): void
+    {
+        self::assertSame(['shift', 'hardness', 'smooth'], array_keys(Operation::EDGES));
+
+        self::assertSame(-1.5, Operation::edge_value('shift', -1.5));
+        self::assertSame(-1.5, Operation::edge_value('shift', '-1.5'), 'a form sends strings');
+        self::assertSame(-10, Operation::edge_value('shift', '-10'));
+        self::assertSame(10, Operation::edge_value('shift', 10.0), 'a whole number is an integer');
+        self::assertSame(0, Operation::edge_value('shift', '-0.0'));
+        self::assertSame(100, Operation::edge_value('hardness', '100'));
+        self::assertSame(0.5, Operation::edge_value('smooth', ' 0.5 '));
+
+        self::assertNull(Operation::edge_value('shift', -10.5));
+        self::assertNull(Operation::edge_value('shift', '11'));
+        self::assertNull(Operation::edge_value('hardness', -1), 'only the shift can be negative');
+        self::assertNull(Operation::edge_value('hardness', 100.5));
+        self::assertNull(Operation::edge_value('smooth', '-0.5'));
+        self::assertNull(Operation::edge_value('smooth', 11));
+
+        self::assertNull(Operation::edge_value('shift', ''));
+        self::assertNull(Operation::edge_value('shift', 'soft'));
+        self::assertNull(Operation::edge_value('shift', '1,5'));
+        self::assertNull(Operation::edge_value('shift', '1px'));
+        self::assertNull(Operation::edge_value('shift', true));
+        self::assertNull(Operation::edge_value('shift', null));
+        self::assertNull(Operation::edge_value('shift', ['1']));
+        self::assertNull(Operation::edge_value('shift', NAN));
+        self::assertNull(Operation::edge_value('hardness', '1e999'));
+        self::assertNull(Operation::edge_value('feather', 1), 'not an edge setting of the plugin');
+    }
+
+    /**
+     * @return iterable<string, array{int|float|null, int|float|null, int|float|null}>
+     */
+    public static function edgesOutOfRange(): iterable
+    {
+        yield 'a shift too far inward' => [-10.5, null, null];
+        yield 'a shift too far outward' => [11, null, null];
+        yield 'a negative hardness' => [null, -1, null];
+        yield 'a hardness over 100' => [null, 101, null];
+        yield 'a negative smoothing' => [null, null, -0.5];
+        yield 'a smoothing over 10' => [0, 0, 10.5];
+    }
+
+    #[DataProvider('edgesOutOfRange')]
+    public function testRefusesEdgeSettingsOutsideTheirRange(int|float|null $shift, int|float|null $hardness, int|float|null $smooth): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        Operation::remove_background(null, null, $shift, $hardness, $smooth);
+    }
+
     public function testRefusesUnknownModels(): void
     {
         $this->expectException(\InvalidArgumentException::class);
@@ -193,6 +264,14 @@ final class OperationTest extends TestCase
         self::assertSame(['model' => 'muse'], Operation::remove_background(null, 'muse')->params());
         self::assertSame(['studio' => true, 'model' => 'lumen'], Operation::remove_background(true, 'lumen')->params());
         self::assertSame('remove-background', Operation::remove_background(null, 'lumen')->key(), 'the model is not part of the key');
+        self::assertSame([], Operation::remove_background(null, null, 0, 0, 0)->params(), '0 is the default');
+        self::assertSame(['shift' => -1.5, 'hardness' => 50, 'smooth' => 2], Operation::remove_background(null, null, -1.5, 50, 2)->params());
+        self::assertSame(['hardness' => 50], Operation::remove_background(false, 'atlas', 0, 50.0, 0)->params());
+        self::assertSame(
+            ['studio' => true, 'model' => 'lumen', 'shift' => -1.5, 'smooth' => 0.5],
+            Operation::remove_background(true, 'lumen', -1.5, null, 0.5)->params(),
+        );
+        self::assertSame('remove-background', Operation::remove_background(null, null, -1.5, 50, 2)->key(), 'the edge settings are not part of the key');
         self::assertSame(['scale' => 4], Operation::upscale(4)->params());
         self::assertSame(['marketplace' => 'ebay'], Operation::fix('ebay')->params());
 

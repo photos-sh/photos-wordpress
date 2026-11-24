@@ -50,9 +50,10 @@ final class Processor {
 	 *
 	 * @param int       $attachment_id The source attachment.
 	 * @param Operation $operation     What to do; one that makes an image. A remove background
-	 *                                 that does not say whether the photo is a studio shot, or
-	 *                                 which model to use, follows the "Studio shots" and
-	 *                                 "Model" settings.
+	 *                                 that does not say whether the photo is a studio shot,
+	 *                                 which model to use, or what to do to the edge, follows the
+	 *                                 "Studio shots", "Model", "Edge shift", "Edge hardness" and
+	 *                                 "Edge smoothing" settings.
 	 * @param int       $max_retries   Extra attempts the library makes itself, waiting in between.
 	 * @param int       $author        The new attachment's author; the current user by default.
 	 * @return int The new attachment's ID.
@@ -67,7 +68,10 @@ final class Processor {
 		if ( Operation::REMOVE_BACKGROUND === $operation->name ) {
 			$operation = Operation::remove_background(
 				$operation->studio ?? $this->settings->studio(),
-				$operation->model ?? $this->settings->model()
+				$operation->model ?? $this->settings->model(),
+				$operation->shift ?? $this->settings->shift(),
+				$operation->hardness ?? $this->settings->hardness(),
+				$operation->smooth ?? $this->settings->smooth()
 			);
 		}
 

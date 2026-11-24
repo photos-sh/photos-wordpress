@@ -183,6 +183,59 @@ final class ProcessorTest extends TestCase
         self::assertSame($url, $transport->requests[0]->url);
     }
 
+    /**
+     * @return iterable<string, array{array<string, mixed>, Operation, string}>
+     */
+    public static function edges(): iterable
+    {
+        $plain = 'http://engine.test/api/v1/remove-background';
+
+        yield 'never set' => [[], Operation::remove_background(), $plain];
+        yield 'the settings at 0' => [['shift' => 0, 'hardness' => 0, 'smooth' => 0], Operation::remove_background(), $plain];
+        yield 'the settings' => [
+            ['shift' => -1.5, 'hardness' => 50, 'smooth' => 2],
+            Operation::remove_background(),
+            $plain . '?smooth=2&shift=-1.5&hardness=50',
+        ];
+        yield 'one setting' => [['shift' => -1.5], Operation::remove_background(), $plain . '?shift=-1.5'];
+        yield 'settings outside their ranges' => [['shift' => -11, 'hardness' => 101, 'smooth' => 'smooth'], Operation::remove_background(), $plain];
+        yield 'with the other settings' => [
+            ['studio' => true, 'model' => 'lumen', 'hardness' => 50],
+            Operation::remove_background(),
+            $plain . '?studio=true&model=lumen&hardness=50',
+        ];
+        yield 'for this run' => [
+            ['shift' => -1.5, 'hardness' => 50, 'smooth' => 2],
+            Operation::remove_background(null, null, 1, 100),
+            $plain . '?smooth=2&shift=1&hardness=100',
+        ];
+        yield '0 for this run' => [
+            ['shift' => -1.5, 'hardness' => 50, 'smooth' => 2],
+            Operation::remove_background(null, null, 0, 0, 0),
+            $plain,
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $saved
+     */
+    #[DataProvider('edges')]
+    public function testRemoveBackgroundFollowsTheEdgeSettings(array $saved, Operation $operation, string $url): void
+    {
+        WpStubs::$options[Settings::OPTION] += $saved;
+        $settings = new Settings();
+        $transport = new RecordingTransport(new Response(200, ['Content-Type' => 'image/png'], 'png'));
+
+        try {
+            (new Processor(new ClientFactory($settings, $transport), $settings))->process(12, $operation);
+            self::fail('The stubbed upload always fails.');
+        } catch (ProcessingException) {
+        }
+
+        self::assertCount(1, $transport->requests);
+        self::assertSame($url, $transport->requests[0]->url);
+    }
+
     public function testResultNoteReadsTheResultsMeta(): void
     {
         WpStubs::$meta[40][Processor::META_RESULT] = ['faces' => 3];

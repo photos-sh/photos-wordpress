@@ -4,7 +4,7 @@ Tags: background removal, upscale, product photos, woocommerce, images
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.3
-Stable tag: 1.2.0
+Stable tag: 1.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -14,7 +14,7 @@ Remove backgrounds, upscale, remove text and fix product photos for marketplaces
 
 Photos.sh brings the image tools of the [Photos.sh](https://photos.sh) API to the media library:
 
-* **Remove background**: a cutout of the product on a transparent background. With "Studio shots" on, the box, case or lid shown with the product is kept too. Choose the model that finds the subject: Atlas for everyday product photos, Lumen for pale packaging on a light backdrop, Muse for people.
+* **Remove background**: a cutout of the product on a transparent background. With "Studio shots" on, the box, case or lid shown with the product is kept too. Choose the model that finds the subject: Atlas for everyday product photos, Lumen for pale packaging on a light backdrop, Muse for people. Three edge settings move the cutout's edge, make it crisper and smooth its outline.
 * **Upscale 2× / 4×**: a larger, sharper copy made with AI.
 * **Remove text**: watermarks, captions and other text off the photo.
 * **Fix light and colour**: automatic levels and white balance.
@@ -40,7 +40,7 @@ You need a Photos.sh account and an API key. Processing an image uses credits of
 
 This plugin sends images to the Photos.sh API (https://api.photos.sh by default) to process them. It is the only service the plugin talks to.
 
-* When you run one of the tools on an image, the image file and the chosen options (the tool, the upscale factor, the marketplace, whether the photo is a studio shot, the background removal model) are sent, with your API key. The processed image comes back and is saved in your media library. For "Write alt text", a description of the image comes back and is saved as its alternative text.
+* When you run one of the tools on an image, the image file and the chosen options (the tool, the upscale factor, the marketplace, whether the photo is a studio shot, the background removal model and edge settings) are sent, with your API key. The processed image comes back and is saved in your media library. For "Write alt text", a description of the image comes back and is saved as its alternative text.
 * When you open Settings → Photos.sh (or run `wp photos-sh account`), your API key is sent to read the account's name and the credits left.
 
 Nothing is sent until you add an API key and run a tool. The service is provided by Photos.sh: [terms of service](https://photos.sh/legal/terms), [privacy policy](https://photos.sh/legal/privacy).
@@ -83,6 +83,16 @@ Under Settings → Photos.sh → Remove background → "Model". Each costs the s
 
 On the command line, `--model=atlas`, `--model=lumen` or `--model=muse` overrides the setting for one run.
 
+= A light rim shows around the cutout on a dark page. What can I do? =
+
+Under Settings → Photos.sh → Remove background, set "Edge shift" to -1 or -2: the cutout's edge moves inward by that many pixels, which trims the rim. It is one of three edge settings. Each is 0 by default, which leaves the edge as it is.
+
+* **Edge shift** (-10 to 10, in pixels): moves the cutout's edge, inward when negative, outward when positive.
+* **Edge hardness** (0 to 100): makes the edge crisper, about a pixel wide at 100. On a dark page, pair it with a small negative shift.
+* **Edge smoothing** (0 to 10): irons out ripples in the outline. From about 4 it rounds small corners and can break thin parts such as a wire stand.
+
+On the command line, `--shift`, `--hardness` and `--smooth` override the settings for one run.
+
 = Why did "Hide faces" or "Restore faces" save no new image? =
 
 No face was found in the image (or, for "Restore faces", every face is large enough already), so there was nothing to change. The notice says so. When faces were found, the notice and the new image's edit screen say how many. A face that was not found is not hidden: check the result before you publish it.
@@ -100,6 +110,10 @@ The progress notice says why: the account is out of credits, the API key was ref
 WordPress has bulk actions only in the list view of the media library. Switch to the list view with the icon above the grid.
 
 == Changelog ==
+
+= 1.3.0 =
+* Settings → Photos.sh → Remove background → "Edge shift", "Edge hardness" and "Edge smoothing": move the cutout's edge inward or outward, make it crisper, and iron out ripples in its outline. Each is 0 by default, which leaves the edge as it is. WP-CLI: `--shift`, `--hardness` and `--smooth` override them for one run.
+* Needs the PHP library photos-sh/photos 1.4; the plugin zip includes it.
 
 = 1.2.0 =
 * Settings → Photos.sh → Remove background → "Model": the model that finds the subject. Atlas (the default) for everyday product photos, Lumen for pale packaging on a light backdrop and close-ups, Muse for people. Each costs the same. WP-CLI: `--model` overrides it for one run.

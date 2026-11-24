@@ -27,8 +27,9 @@ plugin directory, so WordPress does not offer its updates by itself.
 ## What it does
 
 **Settings → Photos.sh.** The API key, a line with the connected account and
-the credits left, "Studio shots" and "Model" under "Remove background", and the
-base URL under "Advanced" (default `https://api.photos.sh`). The key can instead come
+the credits left, "Studio shots", "Model" and three edge settings under
+"Remove background", and the base URL under "Advanced" (default
+`https://api.photos.sh`). The key can instead come
 from the constant or environment variable `PHOTOS_API_KEY`; that wins over the
 saved key and makes the field read-only. The saved key is never printed back:
 the field shows its last four characters as a placeholder.
@@ -57,6 +58,24 @@ It applies to every Remove background, like "Studio shots"; in WP-CLI,
 `model=lumen` or `model=muse` only when one of those is chosen: with Atlas the
 parameter is left out and the API uses its default, Atlas. The setting is saved
 in `photos_sh_settings` as `model`.
+
+"Edge shift", "Edge hardness" and "Edge smoothing" are number fields that
+change the cutout's edge. Each is 0 by default, which leaves the edge as it
+is:
+
+| Setting | Range | What it does |
+| --- | --- | --- |
+| Edge shift | -10 to 10 (px) | Moves the cutout's edge: inward when negative, outward when positive. A shift of -1 to -2 trims the light rim a dark product shows on a dark page. |
+| Edge hardness | 0 to 100 | Makes the edge crisper: about a pixel wide at 100. On a dark page, pair it with a small negative shift. |
+| Edge smoothing | 0 to 10 | Irons out ripples in the outline. From about 4 it rounds small corners and can break thin parts such as a wire stand. |
+
+They apply to every Remove background, like "Studio shots"; in WP-CLI,
+`--shift=<px>`, `--hardness=<0-100>` and `--smooth=<0-10>` override them for
+one run. The API is sent `shift`, `hardness` or `smooth` only when it is not
+0: a site that leaves them at 0 makes the same request as before. A value
+that is not a number in its range is not saved (the saved one is kept); an
+empty field is 0. The settings are saved in `photos_sh_settings` as `shift`,
+`hardness` and `smooth`.
 
 **Media library, one image.** Remove background, Upscale 2× / 4×, Remove text,
 Fix light and colour, Remove noise, Colourise, Restore faces, Hide faces,
@@ -123,6 +142,7 @@ image already is a cutout made by this plugin is skipped.
 wp photos-sh remove-background 12 13
 wp photos-sh remove-background 12 --studio # keep the box; --no-studio: don't
 wp photos-sh remove-background 12 --model=lumen # atlas, lumen or muse
+wp photos-sh remove-background 12 --shift=-1.5 --hardness=50 # the edge; also --smooth
 wp photos-sh upscale 12 --scale=4          # 2 (default) or 4
 wp photos-sh remove-text 12
 wp photos-sh enhance 12                    # Fix light and colour
@@ -157,7 +177,7 @@ caption and parent post are copied. Post meta:
 | --- | --- |
 | `_photos_sh_source` | The source attachment's ID. |
 | `_photos_sh_operation` | `remove-background`, `upscale`, `remove-text`, `enhance`, `denoise`, `colorize`, `restore-faces`, `blur-faces` or `fix`. |
-| `_photos_sh_params` | `['scale' => 2]`, `['marketplace' => 'amazon']`, `['studio' => true]` (remove background on a studio shot), `['model' => 'lumen']` (remove background with Lumen or Muse; both keys when both apply), or `[]`. |
+| `_photos_sh_params` | `['scale' => 2]`, `['marketplace' => 'amazon']`, `['studio' => true]` (remove background on a studio shot), `['model' => 'lumen']` (remove background with Lumen or Muse), `['shift' => -1.5, 'hardness' => 50, 'smooth' => 2]` (remove background with edge settings other than 0; every key that applies is there), or `[]`. |
 | `_photos_sh_result` | For a fix: `['passed' => bool, 'findings' => [...]]`. For remove text: `['removed' => int, 'kept' => int]`. For hide faces: `['faces' => int]`. For restore faces: `['faces' => int, 'skipped' => int]` (`skipped`: faces left alone because they are large enough already). |
 
 "Write alt text" adds no meta of its own: it only sets
